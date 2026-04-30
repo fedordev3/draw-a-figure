@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Нарисуй фигуру</title>
+<title>Draw the Shape</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Nunito:wght@400;600;700;900&display=swap');
 
@@ -518,34 +518,34 @@
 
 <!-- ===== MENU ===== -->
 <div id="menu-screen" class="screen active">
-  <div class="game-title">НАРИСУЙ<br>ФИГУРУ</div>
-  <div class="title-sub">Насколько ты точен?</div>
+  <div class="game-title">DRAW THE<br>SHAPE</div>
+  <div class="title-sub">HOW PRECISE ARE YOU?</div>
 
-  <div class="level-badge" id="menu-level-badge">🎮 УРОВЕНЬ 1</div>
+  <div class="level-badge" id="menu-level-badge">🎮 LEVEL 1</div>
 
-  <div class="shapes-title">Выбери фигуру</div>
+  <div class="shapes-title">Choose a Shape</div>
 
   <div class="shapes-grid" id="shapes-grid">
     <!-- Filled by JS -->
   </div>
 
   <div class="level-progress-wrap" id="menu-level-progress" style="display:none;">
-    <div class="level-progress-label">Прогресс уровня</div>
+    <div class="level-progress-label">Level Progress</div>
     <div class="level-shapes-row" id="menu-shapes-progress"></div>
     <div class="level-complete-msg" id="menu-level-complete-msg"></div>
   </div>
 
-  <button class="btn-primary" id="btn-play">ИГРАТЬ</button>
+  <button class="btn-primary" id="btn-play">PLAY</button>
 </div>
 
 <!-- ===== GAME ===== -->
 <div id="game-screen" class="screen">
   <div class="game-topbar">
-    <button class="btn-exit" id="btn-exit">← Меню</button>
+    <button class="btn-exit" id="btn-exit">← Menu</button>
     <div class="topbar-info">
-      <div class="score-label" id="topbar-level-label">Уровень 1</div>
+      <div class="score-label" id="topbar-level-label">Level 1</div>
       <div class="score-display" id="topbar-best">—</div>
-      <div class="shape-indicator" id="topbar-shape">Круг</div>
+      <div class="shape-indicator" id="topbar-shape">Circle</div>
     </div>
     <div style="width:80px; text-align:right; font-size:0.7rem; color:var(--subtext);" id="topbar-progress"></div>
   </div>
@@ -556,81 +556,162 @@
     <canvas id="game-canvas"></canvas>
   </div>
 
-  <div class="game-hint" id="game-hint">Нарисуй фигуру как можно точнее</div>
+  <div class="game-hint" id="game-hint">Draw the shape as precisely as you can</div>
 </div>
 
 <!-- ===== VICTORY ===== -->
 <div id="victory-screen" class="screen">
   <div class="confetti-wrap" id="confetti-wrap"></div>
   <div class="victory-emoji">🏆</div>
-  <div class="victory-title">ТЫ ПРОШЁЛ<br>ВСЕ УРОВНИ!</div>
-  <div class="victory-sub">Ты мастер точных фигур! Все 5 уровней пройдены. Попробуй снова, чтобы улучшить результат!</div>
-  <button class="btn-primary" id="btn-victory-restart" style="margin-top:10px;">▶ НАЧАТЬ ЗАНОВО</button>
-  <button class="btn-menu-r" id="btn-victory-menu" style="margin-top:6px;">В Меню</button>
+  <div class="victory-title">YOU BEAT<br>ALL LEVELS!</div>
+  <div class="victory-sub">You are a master of precise shapes! All 5 levels cleared. Try again to beat your score!</div>
+  <button class="btn-primary" id="btn-victory-restart" style="margin-top:10px;">▶ PLAY AGAIN</button>
+  <button class="btn-menu-r" id="btn-victory-menu" style="margin-top:6px;">Menu</button>
 </div>
 
 <!-- ===== RESULT OVERLAY ===== -->
 <div id="result-overlay">
   <div class="result-card">
     <div class="result-emoji" id="res-emoji">🎯</div>
-    <div class="result-grade" id="res-grade">Отлично!</div>
+    <div class="result-grade" id="res-grade">Excellent!</div>
     <div class="result-score-big" id="res-score">87</div>
-    <div class="result-pct">% точности</div>
+    <div class="result-pct">% accuracy</div>
     <div class="result-breakdown" id="res-breakdown"></div>
-    <div class="result-best" id="res-best">🏆 Новый рекорд!</div>
+    <div class="result-best" id="res-best">🏆 New Record!</div>
     <div class="result-btns">
-      <button class="btn-retry" id="btn-retry">↺ Ещё раз</button>
-      <button class="btn-menu-r" id="btn-menu-r">Меню</button>
+      <button class="btn-retry" id="btn-retry">↺ Try Again</button>
+      <button class="btn-menu-r" id="btn-menu-r">Menu</button>
     </div>
   </div>
 </div>
 
 <script>
 // ==================== SHAPES DEFINITION ====================
-const SHAPES = [
+// All 15 shapes across 5 levels — no repeats between levels, 3 shapes per level
+const ALL_SHAPES = [
+  // Level 1 — Basic
   {
     id: 'circle',
-    name: 'Круг',
-    hint: 'Обведи идеальный круг',
+    name: 'Circle',
+    hint: 'Draw a perfect circle',
     svgPath: '<circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="2.5"/>',
     color: '#00e5ff',
   },
   {
     id: 'square',
-    name: 'Квадрат',
-    hint: 'Нарисуй ровный квадрат',
+    name: 'Square',
+    hint: 'Draw a neat square',
     svgPath: '<rect x="6" y="6" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.5"/>',
     color: '#7c4dff',
   },
   {
     id: 'triangle',
-    name: 'Треугольник',
-    hint: 'Нарисуй равносторонний треугольник',
+    name: 'Triangle',
+    hint: 'Draw an equilateral triangle',
     svgPath: '<polygon points="25,5 47,43 3,43" fill="none" stroke="currentColor" stroke-width="2.5"/>',
     color: '#ff5722',
   },
+  // Level 2 — Intermediate
   {
     id: 'star',
-    name: 'Звезда',
-    hint: 'Нарисуй пятиконечную звезду',
+    name: 'Star',
+    hint: 'Draw a 5-pointed star',
     svgPath: '<polygon points="25,3 30.5,19 47,19 33.5,29 38.5,45 25,35 11.5,45 16.5,29 3,19 19.5,19" fill="none" stroke="currentColor" stroke-width="2"/>',
     color: '#ffd740',
   },
   {
     id: 'diamond',
-    name: 'Ромб',
-    hint: 'Нарисуй ровный ромб',
+    name: 'Diamond',
+    hint: 'Draw a diamond shape',
     svgPath: '<polygon points="25,3 47,25 25,47 3,25" fill="none" stroke="currentColor" stroke-width="2.5"/>',
     color: '#e040fb',
   },
   {
+    id: 'pentagon',
+    name: 'Pentagon',
+    hint: 'Draw a regular pentagon',
+    svgPath: '<polygon points="25,4 46,18 38,43 12,43 4,18" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#ff9800',
+  },
+  // Level 3 — Geometric
+  {
+    id: 'hexagon',
+    name: 'Hexagon',
+    hint: 'Draw a regular hexagon',
+    svgPath: '<polygon points="25,4 44,14.5 44,35.5 25,46 6,35.5 6,14.5" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#00e676',
+  },
+  {
+    id: 'arrow',
+    name: 'Arrow',
+    hint: 'Draw an arrow pointing right',
+    svgPath: '<polygon points="4,17 30,17 30,8 46,25 30,42 30,33 4,33" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#ff5252',
+  },
+  {
+    id: 'cross',
+    name: 'Cross',
+    hint: 'Draw a plus / cross shape',
+    svgPath: '<polygon points="17,4 33,4 33,17 46,17 46,33 33,33 33,46 17,46 17,33 4,33 4,17 17,17" fill="none" stroke="currentColor" stroke-width="2"/>',
+    color: '#40c4ff',
+  },
+  // Level 4 — Complex
+  {
+    id: 'heart',
+    name: 'Heart',
+    hint: 'Draw a heart shape',
+    svgPath: '<path d="M25,42 C25,42 5,28 5,16 C5,9 11,4 18,6 C21,7 24,10 25,12 C26,10 29,7 32,6 C39,4 45,9 45,16 C45,28 25,42 25,42Z" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#ff4081',
+  },
+  {
+    id: 'crescent',
+    name: 'Crescent',
+    hint: 'Draw a crescent moon shape',
+    svgPath: '<path d="M35,8 A20,20 0 1,0 35,42 A14,14 0 1,1 35,8Z" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#b39ddb',
+  },
+  {
+    id: 'rectangle',
+    name: 'Rectangle',
+    hint: 'Draw a wide rectangle',
+    svgPath: '<rect x="3" y="13" width="44" height="24" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#80cbc4',
+  },
+  // Level 5 — Expert
+  {
+    id: 'octagon',
+    name: 'Octagon',
+    hint: 'Draw a regular octagon',
+    svgPath: '<polygon points="17,4 33,4 45,16 45,34 33,46 17,46 5,34 5,16" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#ffcc02',
+  },
+  {
+    id: 'parallelogram',
+    name: 'Parallelogram',
+    hint: 'Draw a parallelogram (slanted rectangle)',
+    svgPath: '<polygon points="14,8 46,8 36,42 4,42" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#69f0ae',
+  },
+  {
     id: 'spiral',
-    name: 'Спираль',
-    hint: 'Нарисуй спираль от центра',
+    name: 'Spiral',
+    hint: 'Draw a spiral starting from the center',
     svgPath: '<path d="M25,25 m0,-4 a4,4 0 1,1 0,8 a8,8 0 1,1 0,-16 a12,12 0 1,1 0,24 a16,16 0 1,1 0,-32" fill="none" stroke="currentColor" stroke-width="2"/>',
     color: '#00e676',
   },
 ];
+
+// Shapes per level (indices into ALL_SHAPES)
+const SHAPES_BY_LEVEL = [
+  ['circle', 'square', 'triangle'],      // Level 1
+  ['star', 'diamond', 'pentagon'],        // Level 2
+  ['hexagon', 'arrow', 'cross'],          // Level 3
+  ['heart', 'crescent', 'rectangle'],    // Level 4
+  ['octagon', 'parallelogram', 'spiral'],// Level 5
+];
+
+// Active shapes for current level (set by getShapesForLevel)
+let SHAPES = ALL_SHAPES.slice(0, 3);
 
 // ==================== AUDIO ====================
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -678,6 +759,11 @@ function getLevelThreshold(level) {
   return LEVEL_THRESHOLDS[Math.min(level - 1, LEVEL_THRESHOLDS.length - 1)];
 }
 
+function getShapesForLevel(level) {
+  const ids = SHAPES_BY_LEVEL[Math.min(level - 1, SHAPES_BY_LEVEL.length - 1)];
+  return ALL_SHAPES.filter(s => ids.includes(s.id));
+}
+
 function isLevelComplete() {
   return levelCompletedShapes.size >= SHAPES.length;
 }
@@ -685,11 +771,13 @@ function isLevelComplete() {
 function advanceLevel() {
   currentLevel++;
   levelCompletedShapes = new Set();
+  SHAPES = getShapesForLevel(currentLevel);
 }
 
 function resetLevelProgress() {
   currentLevel = 1;
   levelCompletedShapes = new Set();
+  SHAPES = getShapesForLevel(1);
 }
 
 function markShapeComplete(shapeId) {
@@ -717,7 +805,7 @@ function showScreen(name) {
 function updateMenuLevelUI() {
   // Badge
   const badge = document.getElementById('menu-level-badge');
-  if (badge) badge.textContent = '🎮 УРОВЕНЬ ' + currentLevel + ' из ' + TOTAL_LEVELS;
+  if (badge) badge.textContent = '🎮 LEVEL ' + currentLevel + ' OF ' + TOTAL_LEVELS;
 
   // Progress section
   const wrap = document.getElementById('menu-level-progress');
@@ -736,7 +824,7 @@ function updateMenuLevelUI() {
   });
 
   const threshold = getLevelThreshold(currentLevel);
-  if (msg) msg.textContent = `Нужно набрать ≥${threshold}% за каждую фигуру`;
+  if (msg) msg.textContent = `Score ≥${threshold}% on each shape to advance`;
 }
 
 // ==================== SHAPE CARDS ====================
@@ -758,7 +846,7 @@ function buildShapeCards() {
         </svg>
       </div>
       <div class="shape-name">${shape.name}</div>
-      <div class="shape-best" id="best-${shape.id}">${isDone ? '✅ Пройдено' : (bestStr ? '⭐ ' + bestStr : '')}</div>
+      <div class="shape-best" id="best-${shape.id}">${isDone ? '✅ Done' : (bestStr ? '⭐ ' + bestStr : '')}</div>
     `;
     if (!isDone) {
       card.addEventListener('click', () => {
@@ -889,9 +977,9 @@ function initGame() {
   document.getElementById('topbar-best').textContent = best > 0 ? best + '%' : '—';
   document.getElementById('topbar-shape').textContent = shape ? shape.name : '';
   const levelLabel = document.getElementById('topbar-level-label');
-  if (levelLabel) levelLabel.textContent = 'Уровень ' + currentLevel;
+  if (levelLabel) levelLabel.textContent = 'Level ' + currentLevel;
   updateGameProgressBar();
-  hint.textContent = shape ? shape.hint : 'Нарисуй фигуру';
+  hint.textContent = shape ? shape.hint : 'Draw the shape';
   hint.style.opacity = '1';
   gameState = 'idle';
   drawFrame();
@@ -907,7 +995,7 @@ function updateGameProgressBar() {
     bar.appendChild(pip);
   }
   const prog = document.getElementById('topbar-progress');
-  if (prog) prog.textContent = levelCompletedShapes.size + '/' + SHAPES.length + ' фигур';
+  if (prog) prog.textContent = levelCompletedShapes.size + '/' + SHAPES.length + ' shapes';
 }
 
 function resetGame() {
@@ -1036,6 +1124,124 @@ function drawGuideShape(ctx, shapeId, cx, cy, W, H) {
       drawCenterDot(ctx, cx, cy);
       break;
     }
+    case 'pentagon': {
+      const rp = size * 1.15;
+      ctx.beginPath();
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+        if (i === 0) ctx.moveTo(cx + rp * Math.cos(a), cy + rp * Math.sin(a));
+        else ctx.lineTo(cx + rp * Math.cos(a), cy + rp * Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'hexagon': {
+      const rh = size * 1.1;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2;
+        if (i === 0) ctx.moveTo(cx + rh * Math.cos(a), cy + rh * Math.sin(a));
+        else ctx.lineTo(cx + rh * Math.cos(a), cy + rh * Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'arrow': {
+      const aw = size * 1.3, ah = size * 0.8, pt = size * 1.0, stem = size * 0.38;
+      ctx.beginPath();
+      ctx.moveTo(cx - aw, cy - stem);
+      ctx.lineTo(cx, cy - stem);
+      ctx.lineTo(cx, cy - ah);
+      ctx.lineTo(cx + pt, cy);
+      ctx.lineTo(cx, cy + ah);
+      ctx.lineTo(cx, cy + stem);
+      ctx.lineTo(cx - aw, cy + stem);
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'cross': {
+      const cs = size * 1.1, arm = size * 0.42;
+      ctx.beginPath();
+      ctx.moveTo(cx - arm, cy - cs);
+      ctx.lineTo(cx + arm, cy - cs);
+      ctx.lineTo(cx + arm, cy - arm);
+      ctx.lineTo(cx + cs, cy - arm);
+      ctx.lineTo(cx + cs, cy + arm);
+      ctx.lineTo(cx + arm, cy + arm);
+      ctx.lineTo(cx + arm, cy + cs);
+      ctx.lineTo(cx - arm, cy + cs);
+      ctx.lineTo(cx - arm, cy + arm);
+      ctx.lineTo(cx - cs, cy + arm);
+      ctx.lineTo(cx - cs, cy - arm);
+      ctx.lineTo(cx - arm, cy - arm);
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'heart': {
+      const hs = size * 1.1;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + hs * 0.8);
+      ctx.bezierCurveTo(cx - hs * 1.2, cy + hs * 0.2, cx - hs * 1.4, cy - hs * 0.7, cx - hs * 0.5, cy - hs * 0.9);
+      ctx.bezierCurveTo(cx - hs * 0.15, cy - hs, cx, cy - hs * 0.6, cx, cy - hs * 0.35);
+      ctx.bezierCurveTo(cx, cy - hs * 0.6, cx + hs * 0.15, cy - hs, cx + hs * 0.5, cy - hs * 0.9);
+      ctx.bezierCurveTo(cx + hs * 1.4, cy - hs * 0.7, cx + hs * 1.2, cy + hs * 0.2, cx, cy + hs * 0.8);
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'crescent': {
+      const cr = size * 1.1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, cr, Math.PI * 0.25, Math.PI * 1.75);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx + cr * 0.35, cy, cr * 0.78, Math.PI * 1.75, Math.PI * 0.25);
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'rectangle': {
+      const rw = size * 1.5, rh2 = size * 0.8;
+      ctx.beginPath();
+      ctx.rect(cx - rw, cy - rh2, rw * 2, rh2 * 2);
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'octagon': {
+      const ro = size * 1.1;
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
+        if (i === 0) ctx.moveTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a));
+        else ctx.lineTo(cx + ro * Math.cos(a), cy + ro * Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'parallelogram': {
+      const pw = size * 1.4, ph = size * 0.7, skew = size * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(cx - pw + skew, cy - ph);
+      ctx.lineTo(cx + pw + skew, cy - ph);
+      ctx.lineTo(cx + pw - skew, cy + ph);
+      ctx.lineTo(cx - pw - skew, cy + ph);
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
     case 'spiral': {
       ctx.beginPath();
       const turns = 3;
@@ -1159,13 +1365,22 @@ function computeScore(pts, shapeId) {
   if (pts.length < 20) return { total: 0, breakdown: {} };
 
   switch(shapeId) {
-    case 'circle':    return scoreCircle(pts);
-    case 'square':    return scorePolygon(pts, 4, 0);
-    case 'triangle':  return scorePolygon(pts, 3, -Math.PI/2);
-    case 'star':      return scoreStar(pts);
-    case 'diamond':   return scoreDiamond(pts);
-    case 'spiral':    return scoreSpiral(pts);
-    default:          return scoreCircle(pts);
+    case 'circle':        return scoreCircle(pts);
+    case 'square':        return scorePolygon(pts, 4, 0);
+    case 'triangle':      return scorePolygon(pts, 3, -Math.PI/2);
+    case 'star':          return scoreStar(pts);
+    case 'diamond':       return scoreDiamond(pts);
+    case 'pentagon':      return scorePolygon(pts, 5, -Math.PI/2);
+    case 'hexagon':       return scorePolygon(pts, 6, 0);
+    case 'arrow':         return scoreArrow(pts);
+    case 'cross':         return scoreCross(pts);
+    case 'heart':         return scoreHeart(pts);
+    case 'crescent':      return scoreCrescent(pts);
+    case 'rectangle':     return scoreRectangle(pts);
+    case 'octagon':       return scorePolygon(pts, 8, 0);
+    case 'parallelogram': return scoreParallelogram(pts);
+    case 'spiral':        return scoreSpiral(pts);
+    default:              return scoreCircle(pts);
   }
 }
 
@@ -1198,10 +1413,10 @@ function scoreCircle(pts) {
   return {
     total,
     breakdown: {
-      'Округлость': pct(roundness),
-      'Замкнутость': pct(closure),
-      'Покрытие': pct(coverage),
-      'Форма': pct(aspect),
+      'Roundness': pct(roundness),
+      'Closure': pct(closure),
+      'Coverage': pct(coverage),
+      'Shape': pct(aspect),
     }
   };
 }
@@ -1256,10 +1471,10 @@ function scorePolygon(pts, sides, _startAngle) {
   return {
     total,
     breakdown: {
-      'Точность': pct(bestShapeScore),
-      'Замкнутость': pct(closure),
-      'Покрытие': pct(coverage),
-      ...(sides===4 ? {'Пропорции': pct(aspect)} : {}),
+      'Accuracy': pct(bestShapeScore),
+      'Closure': pct(closure),
+      'Coverage': pct(coverage),
+      ...(sides===4 ? {'Proportions': pct(aspect)} : {}),
     }
   };
 }
@@ -1303,7 +1518,7 @@ function scoreStar(pts) {
   const total = strictScore(raw);
   return {
     total,
-    breakdown: { 'Точность': pct(shapeScore), 'Замкнутость': pct(cl), 'Покрытие': pct(coverage) }
+    breakdown: { 'Accuracy': pct(shapeScore), 'Closure': pct(cl), 'Coverage': pct(coverage) }
   };
 }
 
@@ -1338,7 +1553,7 @@ function scoreDiamond(pts) {
   const total=strictScore(raw);
   return {
     total,
-    breakdown:{'Точность':pct(shapeScore),'Замкнутость':pct(cl),'Покрытие':pct(coverage),'Форма':pct(aspect)}
+    breakdown:{'Accuracy':pct(shapeScore),'Closure':pct(cl),'Coverage':pct(coverage),'Shape':pct(aspect)}
   };
 }
 
@@ -1391,8 +1606,120 @@ function scoreSpiral(pts) {
   const total=strictScore(raw);
   return {
     total,
-    breakdown:{'Раскрутка':pct(monoScore),'Плавность':pct(smoothness),'Витки':pct(turnScore),'Рост':pct(growthScore)}
+    breakdown:{'Unwinding':pct(monoScore),'Smoothness':pct(smoothness),'Turns':pct(turnScore),'Growth':pct(growthScore)}
   };
+}
+
+// ---- Arrow ----
+function scoreArrow(pts) {
+  // Arrow is roughly symmetric horizontally, with a pointed right side
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+  const w=maxX-minX, h=maxY-minY;
+  const aspect = h>0 ? Math.min(w/h, 3)/3 : 0; // arrow should be wider than tall
+  const r = Math.max(w,h)/2;
+  const cl = closureScore(pts, r);
+  const raw = aspect*0.40 + cl*0.35 + 0.25;
+  return { total: strictScore(raw), breakdown: {'Aspect': pct(aspect), 'Closure': pct(cl)} };
+}
+
+// ---- Cross ----
+function scoreCross(pts) {
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+  const w=maxX-minX, h=maxY-minY;
+  const aspect = Math.min(w,h)/Math.max(w,h);
+  const r = Math.max(w,h)/2;
+  const cl = closureScore(pts, r);
+  // Symmetry: count pts in each quadrant
+  const q=[0,0,0,0];
+  pts.forEach(p=>{
+    const dx=p.x-cx, dy=p.y-cy;
+    if(dx>=0&&dy<0) q[0]++; else if(dx>=0&&dy>=0) q[1]++;
+    else if(dx<0&&dy>=0) q[2]++; else q[3]++;
+  });
+  const total_q=q.reduce((a,b)=>a+b,0);
+  const sym = total_q>0 ? 1 - q.map(v=>Math.abs(v/total_q-0.25)).reduce((a,b)=>a+b,0)*2 : 0;
+  const raw = aspect*0.30 + cl*0.30 + Math.max(0,sym)*0.40;
+  return { total: strictScore(raw), breakdown: {'Symmetry': pct(sym), 'Closure': pct(cl), 'Proportions': pct(aspect)} };
+}
+
+// ---- Heart ----
+function scoreHeart(pts) {
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  // Left-right symmetry check
+  const leftPts = pts.filter(p=>p.x<cx);
+  const rightPts = pts.filter(p=>p.x>=cx);
+  const sym = Math.min(leftPts.length, rightPts.length) / Math.max(leftPts.length, rightPts.length+0.1);
+  const r = Math.max(...pts.map(p=>Math.hypot(p.x-cx,p.y-cy)));
+  const cl = closureScore(pts, r);
+  const raw = sym*0.45 + cl*0.35 + 0.20;
+  return { total: strictScore(raw), breakdown: {'Symmetry': pct(sym), 'Closure': pct(cl)} };
+}
+
+// ---- Crescent ----
+function scoreCrescent(pts) {
+  // Mostly check that it looks like an arc (partial circle) with concavity
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
+  const r = radii.reduce((a,b)=>a+b,0)/radii.length;
+  const variance = radii.reduce((acc,ri)=>acc+(ri-r)**2,0)/radii.length;
+  const roundness = Math.max(0,1-(Math.sqrt(variance)/r)*1.5);
+  const cl = closureScore(pts, r);
+  const raw = roundness*0.55 + cl*0.45;
+  return { total: strictScore(raw), breakdown: {'Roundness': pct(roundness), 'Closure': pct(cl)} };
+}
+
+// ---- Rectangle ----
+function scoreRectangle(pts) {
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+  const w=maxX-minX, h=maxY-minY;
+  // Should be wider than tall (landscape)
+  const aspect = h>0&&w>0 ? Math.min(w,h)/Math.max(w,h) : 0;
+  // Check points hug the edges via polygon scoring (4 sides)
+  const size = Math.max(w,h)/2;
+  const scaleX = w/2, scaleY = h/2;
+  // Fit to actual rectangle (not square)
+  let totalDist = 0;
+  pts.forEach(p=>{
+    const dx=p.x-cx, dy=p.y-cy;
+    // Distance to rectangle edge
+    const edgeDist = Math.min(
+      Math.abs(Math.abs(dy)-scaleY),
+      Math.abs(Math.abs(dx)-scaleX)
+    );
+    totalDist += edgeDist;
+  });
+  const avgDist = totalDist/pts.length;
+  const shapeScore = Math.max(0, 1-(avgDist/Math.max(scaleX,scaleY))*2.5);
+  const r = size;
+  const cl = closureScore(pts, r);
+  const raw = shapeScore*0.55 + cl*0.25 + aspect*0.20;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(shapeScore), 'Closure': pct(cl), 'Proportions': pct(1-aspect)} };
+}
+
+// ---- Parallelogram ----
+function scoreParallelogram(pts) {
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+  const w=maxX-minX, h=maxY-minY;
+  // Should be wider than tall
+  const aspect = h>0 ? Math.min(w,h)/Math.max(w,h) : 0;
+  const r = Math.max(w,h)/2;
+  const cl = closureScore(pts, r);
+  const raw = (1-aspect)*0.30 + cl*0.45 + 0.25;
+  return { total: strictScore(raw), breakdown: {'Closure': pct(cl), 'Slant': pct(1-aspect)} };
 }
 
 // ---- Helpers ----
@@ -1458,7 +1785,7 @@ function endDraw(e) {
   drawFrame();
 
   if (points.length < 20) {
-    hint.textContent = 'Слишком короткий путь — попробуй ещё!';
+    hint.textContent = 'Too short — try again!';
     hint.style.opacity = '1';
     setTimeout(() => { gameState = 'idle'; }, 1500);
     return;
@@ -1487,13 +1814,13 @@ function endDraw(e) {
 
 // ==================== RESULT ============================
 function getGrade(score) {
-  if (score >= 95) return { emoji: '🏆', text: 'Абсолютное совершенство!' };
-  if (score >= 85) return { emoji: '🎯', text: 'Превосходно!' };
-  if (score >= 70) return { emoji: '🌟', text: 'Очень хорошо!' };
-  if (score >= 55) return { emoji: '👍', text: 'Неплохо!' };
-  if (score >= 35) return { emoji: '😅', text: 'Есть над чем работать' };
-  if (score >= 15) return { emoji: '😬', text: 'Тренируйся больше!' };
-  return { emoji: '😂', text: 'Что это вообще было?' };
+  if (score >= 95) return { emoji: '🏆', text: 'Absolute Perfection!' };
+  if (score >= 85) return { emoji: '🎯', text: 'Excellent!' };
+  if (score >= 70) return { emoji: '🌟', text: 'Very Good!' };
+  if (score >= 55) return { emoji: '👍', text: 'Not Bad!' };
+  if (score >= 35) return { emoji: '😅', text: 'Keep Practicing' };
+  if (score >= 15) return { emoji: '😬', text: 'Train More!' };
+  return { emoji: '😂', text: 'What was that?!' };
 }
 
 function showResult(result, isNewBest, shapePassed) {
@@ -1522,22 +1849,22 @@ function showResult(result, isNewBest, shapePassed) {
     bestEl.classList.add('show');
     const remaining = SHAPES.length - levelCompletedShapes.size;
     if (isLevelComplete()) {
-      bestEl.textContent = '✅ Все фигуры уровня ' + currentLevel + ' пройдены!';
+      bestEl.textContent = '✅ All shapes for Level ' + currentLevel + ' cleared!';
     } else {
-      bestEl.textContent = '✅ Фигура засчитана! Осталось: ' + remaining;
+      bestEl.textContent = '✅ Shape passed! Remaining: ' + remaining;
     }
     bestEl.style.background = 'rgba(0,230,118,0.08)';
     bestEl.style.borderColor = 'rgba(0,230,118,0.3)';
     bestEl.style.color = 'var(--success)';
   } else if (isNewBest) {
     bestEl.classList.add('show');
-    bestEl.textContent = '🏆 Новый рекорд: ' + result.total + '%!';
+    bestEl.textContent = '🏆 New record: ' + result.total + '%!';
     bestEl.style.background = '';
     bestEl.style.borderColor = '';
     bestEl.style.color = '';
   } else if (result.total < threshold && !levelCompletedShapes.has(selectedShapeId)) {
     bestEl.classList.add('show');
-    bestEl.textContent = `⚠️ Нужно ≥${threshold}% для уровня ${currentLevel}`;
+    bestEl.textContent = `⚠️ Need ≥${threshold}% for Level ${currentLevel}`;
     bestEl.style.background = 'rgba(255,82,82,0.08)';
     bestEl.style.borderColor = 'rgba(255,82,82,0.3)';
     bestEl.style.color = '#ff5252';
@@ -1548,9 +1875,9 @@ function showResult(result, isNewBest, shapePassed) {
   // Update retry button label
   const retryBtn = document.getElementById('btn-retry');
   if (levelCompletedShapes.has(selectedShapeId)) {
-    retryBtn.textContent = '→ Следующая';
+    retryBtn.textContent = '→ Next';
   } else {
-    retryBtn.textContent = '↺ Ещё раз';
+    retryBtn.textContent = '↺ Try Again';
   }
 
   document.getElementById('result-overlay').classList.add('show');
