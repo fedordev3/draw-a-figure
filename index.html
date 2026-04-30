@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Нарисуй фигуру</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Nunito:wght@400;600;700;900&display=swap');
+
+  :root {
+    --bg: #0a0a1a;
+    --surface: #12122a;
+    --card: #1a1a35;
+    --accent: #7c4dff;
+    --accent2: #00e5ff;
+    --gold: #ffd740;
+    --text: #e8e8ff;
+    --subtext: #8080aa;
+    --success: #00e676;
+    --radius: 18px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Nunito', sans-serif;
+    color: var(--text);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #stars {
+    position: fixed; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse at 20% 30%, #1a0a3a 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, #0a1a3a 0%, transparent 60%),
+                var(--bg);
+  }
+  #stars::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 45%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 50% 20%, rgba(255,255,255,0.7) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 60%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 35% 75%, rgba(255,255,255,0.6) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 85%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5% 90%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(2px 2px at 45% 10%, rgba(124,77,255,0.8) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 15% 55%, rgba(0,229,255,0.6) 0%, transparent 100%);
+  }
+
+  .screen {
+    position: fixed; inset: 0; z-index: 10;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .screen.active { opacity: 1; pointer-events: all; }
+
+  /* ---- MENU ---- */
+  #menu-screen { gap: 0; padding: 20px; overflow-y: auto; justify-content: flex-start; padding-top: 40px; }
+
+  .game-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: clamp(1.8rem, 7vw, 3rem);
+    text-align: center;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 50%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 20px rgba(124,77,255,0.5));
+    animation: titlePulse 3s ease-in-out infinite;
+  }
+  @keyframes titlePulse {
+    0%, 100% { filter: drop-shadow(0 0 20px rgba(124,77,255,0.5)); }
+    50% { filter: drop-shadow(0 0 35px rgba(0,229,255,0.7)); }
+  }
+
+  .title-sub {
+    color: var(--subtext);
+    font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+    text-align: center;
+  }
+
+  /* ---- SHAPE SELECTION ---- */
+  .shapes-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    color: var(--subtext);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .shapes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 380px;
+    margin-bottom: 24px;
+  }
+
+  .shape-card {
+    background: var(--card);
+    border: 2px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 14px 8px 10px;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .shape-card:hover {
+    border-color: rgba(124,77,255,0.4);
+    background: rgba(124,77,255,0.1);
+    transform: translateY(-2px);
+  }
+  .shape-card.selected {
+    border-color: var(--accent2);
+    background: rgba(0,229,255,0.07);
+    box-shadow: 0 0 20px rgba(0,229,255,0.15), inset 0 0 20px rgba(0,229,255,0.04);
+  }
+  .shape-card.selected::after {
+    content: '✓';
+    position: absolute; top: 6px; right: 8px;
+    color: var(--accent2);
+    font-size: 0.75rem;
+    font-weight: 900;
+  }
+
+  .shape-icon {
+    width: 50px; height: 50px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .shape-icon svg {
+    width: 100%; height: 100%;
+  }
+
+  .shape-name {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--subtext);
+    text-align: center;
+    letter-spacing: 0.05em;
+    line-height: 1.2;
+  }
+  .shape-card.selected .shape-name { color: var(--accent2); }
+
+  .shape-best {
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: var(--gold);
+    text-align: center;
+    min-height: 12px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #5c35cc);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 60px;
+    font-family: 'Russo One', sans-serif;
+    font-size: clamp(1rem, 4vw, 1.3rem);
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    box-shadow: 0 8px 32px rgba(124,77,255,0.4), 0 0 0 0 rgba(124,77,255,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+    width: 220px;
+    animation: btnPulse 2.5s ease-in-out infinite;
+  }
+  .btn-primary:hover, .btn-primary:active {
+    transform: scale(1.05);
+    box-shadow: 0 12px 40px rgba(124,77,255,0.6);
+    animation: none;
+  }
+  @keyframes btnPulse {
+    0%, 100% { box-shadow: 0 8px 32px rgba(124,77,255,0.4), 0 0 0 0 rgba(124,77,255,0.3); }
+    50% { box-shadow: 0 8px 32px rgba(124,77,255,0.4), 0 0 0 12px rgba(124,77,255,0); }
+  }
+
+  /* ---- GAME SCREEN ---- */
+  #game-screen { justify-content: flex-start; padding: 0; }
+
+  .game-topbar {
+    width: 100%; display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px 10px;
+    position: relative; z-index: 20;
+    flex-shrink: 0;
+  }
+
+  .btn-exit {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--subtext);
+    border-radius: 12px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    z-index: 30;
+  }
+  .btn-exit:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+
+  .topbar-info { text-align: center; }
+  .score-display {
+    font-family: 'Russo One', sans-serif;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+  }
+  .score-label {
+    color: var(--subtext);
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .shape-indicator {
+    font-size: 0.7rem;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    text-align: center;
+    margin-top: 2px;
+  }
+
+  .canvas-wrap {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  #game-canvas { touch-action: none; cursor: crosshair; display: block; }
+
+  .game-hint {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    text-align: center;
+    padding: 14px 20px 20px;
+    color: var(--subtext);
+    font-size: clamp(0.75rem, 3vw, 0.9rem);
+    letter-spacing: 0.05em;
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  /* ---- RESULT OVERLAY ---- */
+  #result-overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(10,10,26,0.88);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  #result-overlay.show { opacity: 1; pointer-events: all; }
+
+  .result-card {
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 32px 36px;
+    text-align: center;
+    max-width: 340px;
+    width: 90%;
+    transform: scale(0.85);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(124,77,255,0.2);
+  }
+  #result-overlay.show .result-card { transform: scale(1); }
+
+  .result-emoji { font-size: 2.8rem; margin-bottom: 6px; }
+  .result-grade {
+    font-family: 'Russo One', sans-serif;
+    font-size: clamp(1rem, 5vw, 1.3rem);
+    margin-bottom: 14px;
+    color: var(--accent2);
+  }
+  .result-score-big {
+    font-family: 'Russo One', sans-serif;
+    font-size: clamp(3.5rem, 14vw, 5rem);
+    line-height: 1;
+    margin-bottom: 4px;
+    background: linear-gradient(135deg, var(--gold), #ff9800);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .result-pct { color: var(--subtext); font-size: 0.85rem; margin-bottom: 6px; }
+
+  .result-breakdown {
+    display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .breakdown-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 0.7rem;
+    color: var(--subtext);
+    text-align: center;
+  }
+  .breakdown-item .bval { color: var(--text); font-weight: 900; display: block; font-size: 0.85rem; }
+  .breakdown-item.good .bval { color: var(--success); }
+  .breakdown-item.mid .bval { color: var(--gold); }
+  .breakdown-item.bad .bval { color: #ff5252; }
+
+  .result-best {
+    background: rgba(255,215,64,0.08);
+    border: 1px solid rgba(255,215,64,0.2);
+    border-radius: 10px;
+    padding: 8px 16px;
+    margin-bottom: 20px;
+    font-size: 0.82rem;
+    color: var(--gold);
+    display: none;
+  }
+  .result-best.show { display: block; }
+
+  .result-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-retry {
+    background: linear-gradient(135deg, var(--accent), #5c35cc);
+    color: #fff; border: none; border-radius: 50px;
+    padding: 13px 28px;
+    font-family: 'Russo One', sans-serif;
+    font-size: 0.95rem; cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 6px 20px rgba(124,77,255,0.4);
+  }
+  .btn-retry:hover { transform: scale(1.05); }
+  .btn-menu-r {
+    background: transparent; color: var(--subtext);
+    border: 1.5px solid rgba(128,128,170,0.3);
+    border-radius: 50px; padding: 13px 22px;
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 0.95rem; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-menu-r:hover { border-color: var(--accent); color: var(--accent2); }
+
+  @keyframes sparkle {
+    0% { opacity: 1; transform: scale(0) translate(var(--dx), var(--dy)); }
+    100% { opacity: 0; transform: scale(1) translate(calc(var(--dx)*3), calc(var(--dy)*3)); }
+  }
+  .spark {
+    position: fixed; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--gold); pointer-events: none; z-index: 200;
+    animation: sparkle 0.8s ease-out forwards;
+  }
+
+  /* ---- LEVEL SYSTEM ---- */
+  .level-badge {
+    background: rgba(124,77,255,0.15);
+    border: 1.5px solid rgba(124,77,255,0.35);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: 'Russo One', sans-serif;
+    font-size: 0.75rem;
+    color: var(--accent2);
+    letter-spacing: 0.1em;
+    margin-bottom: 18px;
+    text-align: center;
+  }
+
+  .level-progress-wrap {
+    width: 100%; max-width: 380px;
+    margin-bottom: 20px;
+  }
+  .level-progress-label {
+    font-size: 0.7rem;
+    color: var(--subtext);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .level-shapes-row {
+    display: flex; gap: 8px; justify-content: center; align-items: center;
+    flex-wrap: wrap;
+  }
+  .level-shape-dot {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1.5px solid rgba(255,255,255,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem;
+    color: var(--subtext);
+    text-align: center;
+    line-height: 1.1;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .level-shape-dot.done {
+    background: rgba(0,230,118,0.1);
+    border-color: var(--success);
+  }
+  .level-shape-dot.done::after {
+    content: '✓';
+    position: absolute;
+    top: -5px; right: -5px;
+    background: var(--success);
+    color: #000;
+    border-radius: 50%;
+    width: 14px; height: 14px;
+    font-size: 0.6rem;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900;
+  }
+  .level-shape-dot svg { width: 20px; height: 20px; }
+
+  .level-complete-msg {
+    font-size: 0.8rem;
+    color: var(--success);
+    text-align: center;
+    margin-top: 8px;
+    min-height: 18px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+
+  /* locked shapes */
+  .shape-card.locked {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .shape-card.locked::before {
+    content: '🔒';
+    position: absolute; top: 6px; left: 8px;
+    font-size: 0.75rem;
+  }
+
+  /* ---- VICTORY SCREEN ---- */
+  #victory-screen {
+    gap: 16px; padding: 30px 20px;
+  }
+  .victory-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: clamp(2rem, 8vw, 3.2rem);
+    text-align: center;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--gold) 0%, #ff9800 50%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titlePulse 2s ease-in-out infinite;
+  }
+  .victory-emoji { font-size: 4rem; text-align: center; }
+  .victory-sub {
+    color: var(--subtext);
+    font-size: clamp(0.85rem, 3vw, 1rem);
+    text-align: center;
+    max-width: 300px;
+    line-height: 1.5;
+  }
+  .confetti-wrap {
+    position: fixed; inset: 0; pointer-events: none; z-index: 5;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* in-game level bar */
+  .game-level-bar {
+    display: flex; gap: 6px; align-items: center; justify-content: center;
+    padding: 6px 20px 2px;
+    flex-shrink: 0;
+  }
+  .level-pip {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,0.08);
+    transition: background 0.4s;
+    max-width: 48px;
+  }
+  .level-pip.done { background: var(--success); }
+  .level-pip.active { background: var(--accent2); animation: pipPulse 1s ease-in-out infinite; }
+  @keyframes pipPulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+</style>
+<script src="https://yandex.ru/games/sdk/v2" onerror="console.log('Not in Yandex environment')"></script>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<!-- ===== MENU ===== -->
+<div id="menu-screen" class="screen active">
+  <div class="game-title">НАРИСУЙ<br>ФИГУРУ</div>
+  <div class="title-sub">Насколько ты точен?</div>
+
+  <div class="level-badge" id="menu-level-badge">🎮 УРОВЕНЬ 1</div>
+
+  <div class="shapes-title">Выбери фигуру</div>
+
+  <div class="shapes-grid" id="shapes-grid">
+    <!-- Filled by JS -->
+  </div>
+
+  <div class="level-progress-wrap" id="menu-level-progress" style="display:none;">
+    <div class="level-progress-label">Прогресс уровня</div>
+    <div class="level-shapes-row" id="menu-shapes-progress"></div>
+    <div class="level-complete-msg" id="menu-level-complete-msg"></div>
+  </div>
+
+  <button class="btn-primary" id="btn-play">ИГРАТЬ</button>
+</div>
+
+<!-- ===== GAME ===== -->
+<div id="game-screen" class="screen">
+  <div class="game-topbar">
+    <button class="btn-exit" id="btn-exit">← Меню</button>
+    <div class="topbar-info">
+      <div class="score-label" id="topbar-level-label">Уровень 1</div>
+      <div class="score-display" id="topbar-best">—</div>
+      <div class="shape-indicator" id="topbar-shape">Круг</div>
+    </div>
+    <div style="width:80px; text-align:right; font-size:0.7rem; color:var(--subtext);" id="topbar-progress"></div>
+  </div>
+
+  <div class="game-level-bar" id="game-level-bar"></div>
+
+  <div class="canvas-wrap">
+    <canvas id="game-canvas"></canvas>
+  </div>
+
+  <div class="game-hint" id="game-hint">Нарисуй фигуру как можно точнее</div>
+</div>
+
+<!-- ===== VICTORY ===== -->
+<div id="victory-screen" class="screen">
+  <div class="confetti-wrap" id="confetti-wrap"></div>
+  <div class="victory-emoji">🏆</div>
+  <div class="victory-title">ТЫ ПРОШЁЛ<br>ВСЕ УРОВНИ!</div>
+  <div class="victory-sub">Ты мастер точных фигур! Все 5 уровней пройдены. Попробуй снова, чтобы улучшить результат!</div>
+  <button class="btn-primary" id="btn-victory-restart" style="margin-top:10px;">▶ НАЧАТЬ ЗАНОВО</button>
+  <button class="btn-menu-r" id="btn-victory-menu" style="margin-top:6px;">В Меню</button>
+</div>
+
+<!-- ===== RESULT OVERLAY ===== -->
+<div id="result-overlay">
+  <div class="result-card">
+    <div class="result-emoji" id="res-emoji">🎯</div>
+    <div class="result-grade" id="res-grade">Отлично!</div>
+    <div class="result-score-big" id="res-score">87</div>
+    <div class="result-pct">% точности</div>
+    <div class="result-breakdown" id="res-breakdown"></div>
+    <div class="result-best" id="res-best">🏆 Новый рекорд!</div>
+    <div class="result-btns">
+      <button class="btn-retry" id="btn-retry">↺ Ещё раз</button>
+      <button class="btn-menu-r" id="btn-menu-r">Меню</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== SHAPES DEFINITION ====================
+const SHAPES = [
+  {
+    id: 'circle',
+    name: 'Круг',
+    hint: 'Обведи идеальный круг',
+    svgPath: '<circle cx="25" cy="25" r="20" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#00e5ff',
+  },
+  {
+    id: 'square',
+    name: 'Квадрат',
+    hint: 'Нарисуй ровный квадрат',
+    svgPath: '<rect x="6" y="6" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#7c4dff',
+  },
+  {
+    id: 'triangle',
+    name: 'Треугольник',
+    hint: 'Нарисуй равносторонний треугольник',
+    svgPath: '<polygon points="25,5 47,43 3,43" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#ff5722',
+  },
+  {
+    id: 'star',
+    name: 'Звезда',
+    hint: 'Нарисуй пятиконечную звезду',
+    svgPath: '<polygon points="25,3 30.5,19 47,19 33.5,29 38.5,45 25,35 11.5,45 16.5,29 3,19 19.5,19" fill="none" stroke="currentColor" stroke-width="2"/>',
+    color: '#ffd740',
+  },
+  {
+    id: 'diamond',
+    name: 'Ромб',
+    hint: 'Нарисуй ровный ромб',
+    svgPath: '<polygon points="25,3 47,25 25,47 3,25" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    color: '#e040fb',
+  },
+  {
+    id: 'spiral',
+    name: 'Спираль',
+    hint: 'Нарисуй спираль от центра',
+    svgPath: '<path d="M25,25 m0,-4 a4,4 0 1,1 0,8 a8,8 0 1,1 0,-16 a12,12 0 1,1 0,24 a16,16 0 1,1 0,-32" fill="none" stroke="currentColor" stroke-width="2"/>',
+    color: '#00e676',
+  },
+];
+
+// ==================== AUDIO ====================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+const volume = 0.7;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+function playTone(freq, type, dur, vol) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + dur);
+    gain.gain.setValueAtTime((vol || 0.15) * volume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function playDrawTick() { playTone(440 + Math.random()*100, 'sine', 0.08, 0.04); }
+function playSuccess(score) {
+  const baseFreq = 220 + score * 4;
+  [0, 0.15, 0.3, 0.5].forEach((t, i) => {
+    setTimeout(() => playTone(baseFreq * [1,1.25,1.5,2][i], 'sine', 0.3, 0.18), t * 1000);
+  });
+}
+function playClick() { playTone(600, 'sine', 0.1, 0.1); }
+
+// ==================== LEVEL SYSTEM ====================
+// Minimum score required to pass a shape per level (1=easy, 5=hard)
+const LEVEL_THRESHOLDS = [20, 35, 50, 65, 80];
+const TOTAL_LEVELS = 5;
+
+// Current session state (not persisted — each play starts from level 1)
+let currentLevel = 1;
+let levelCompletedShapes = new Set(); // shape ids completed in current level
+
+function getLevelThreshold(level) {
+  return LEVEL_THRESHOLDS[Math.min(level - 1, LEVEL_THRESHOLDS.length - 1)];
+}
+
+function isLevelComplete() {
+  return levelCompletedShapes.size >= SHAPES.length;
+}
+
+function advanceLevel() {
+  currentLevel++;
+  levelCompletedShapes = new Set();
+}
+
+function resetLevelProgress() {
+  currentLevel = 1;
+  levelCompletedShapes = new Set();
+}
+
+function markShapeComplete(shapeId) {
+  levelCompletedShapes.add(shapeId);
+}
+
+// ==================== STATE ====================
+let selectedShapeId = 'circle';
+let currentScore = 0;
+
+function getBest(shapeId) {
+  return parseInt(localStorage.getItem('best_' + shapeId) || '0');
+}
+function setBest(shapeId, score) {
+  localStorage.setItem('best_' + shapeId, score);
+}
+
+// ==================== SCREENS ====================
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(name + '-screen').classList.add('active');
+}
+
+// ==================== MENU UI ====================
+function updateMenuLevelUI() {
+  // Badge
+  const badge = document.getElementById('menu-level-badge');
+  if (badge) badge.textContent = '🎮 УРОВЕНЬ ' + currentLevel + ' из ' + TOTAL_LEVELS;
+
+  // Progress section
+  const wrap = document.getElementById('menu-level-progress');
+  const row = document.getElementById('menu-shapes-progress');
+  const msg = document.getElementById('menu-level-complete-msg');
+  if (!wrap || !row) return;
+
+  wrap.style.display = 'block';
+  row.innerHTML = '';
+  SHAPES.forEach(shape => {
+    const dot = document.createElement('div');
+    dot.className = 'level-shape-dot' + (levelCompletedShapes.has(shape.id) ? ' done' : '');
+    dot.innerHTML = `<svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" style="color:${shape.color}">${shape.svgPath}</svg>`;
+    dot.title = shape.name;
+    row.appendChild(dot);
+  });
+
+  const threshold = getLevelThreshold(currentLevel);
+  if (msg) msg.textContent = `Нужно набрать ≥${threshold}% за каждую фигуру`;
+}
+
+// ==================== SHAPE CARDS ====================
+function buildShapeCards() {
+  const grid = document.getElementById('shapes-grid');
+  grid.innerHTML = '';
+  SHAPES.forEach(shape => {
+    const card = document.createElement('div');
+    const isDone = levelCompletedShapes.has(shape.id);
+    card.className = 'shape-card' + (shape.id === selectedShapeId ? ' selected' : '') + (isDone ? ' locked' : '');
+    card.dataset.id = shape.id;
+    const best = getBest(shape.id);
+    const bestStr = best > 0 ? best + '%' : '';
+    const doneStr = isDone ? '✅' : '';
+    card.innerHTML = `
+      <div class="shape-icon">
+        <svg viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg" style="color:${shape.color}">
+          ${shape.svgPath}
+        </svg>
+      </div>
+      <div class="shape-name">${shape.name}</div>
+      <div class="shape-best" id="best-${shape.id}">${isDone ? '✅ Пройдено' : (bestStr ? '⭐ ' + bestStr : '')}</div>
+    `;
+    if (!isDone) {
+      card.addEventListener('click', () => {
+        playClick();
+        selectedShapeId = shape.id;
+        document.querySelectorAll('.shape-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+      });
+    }
+    grid.appendChild(card);
+  });
+
+  // Auto-select first non-done shape
+  const firstAvailable = SHAPES.find(s => !levelCompletedShapes.has(s.id));
+  if (firstAvailable) {
+    selectedShapeId = firstAvailable.id;
+    const card = grid.querySelector(`[data-id="${firstAvailable.id}"]`);
+    if (card) {
+      document.querySelectorAll('.shape-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+    }
+  }
+
+  updateMenuLevelUI();
+}
+buildShapeCards();
+
+function updateShapeBestDisplay(shapeId) {
+  const best = getBest(shapeId);
+  const el = document.getElementById('best-' + shapeId);
+  if (el) el.textContent = best > 0 ? '⭐ ' + best + '%' : '';
+}
+
+// ==================== MENU BUTTONS ====================
+document.getElementById('btn-play').addEventListener('click', () => {
+  playClick();
+  showScreen('game');
+  initGame();
+});
+document.getElementById('btn-exit').addEventListener('click', () => {
+  playClick();
+  resetGame();
+  buildShapeCards();
+  showScreen('menu');
+});
+document.getElementById('btn-retry').addEventListener('click', () => {
+  playClick();
+  document.getElementById('result-overlay').classList.remove('show');
+
+  // If current shape was completed, move to next available shape
+  if (levelCompletedShapes.has(selectedShapeId)) {
+    // Check if level is fully complete
+    if (isLevelComplete()) {
+      // All shapes done!
+      if (currentLevel >= TOTAL_LEVELS) {
+        // Victory!
+        setTimeout(() => {
+          showScreen('victory');
+          launchConfetti();
+        }, 300);
+        return;
+      } else {
+        // Advance to next level
+        advanceLevel();
+        buildShapeCards();
+        showScreen('game');
+        initGame();
+        return;
+      }
+    }
+    // Pick next non-done shape
+    const next = SHAPES.find(s => !levelCompletedShapes.has(s.id));
+    if (next) {
+      selectedShapeId = next.id;
+      document.getElementById('topbar-shape').textContent = next.name;
+      document.getElementById('topbar-best').textContent = getBest(next.id) > 0 ? getBest(next.id) + '%' : '—';
+      hint.textContent = next.hint;
+      hint.style.opacity = '1';
+    }
+  }
+
+  setTimeout(() => { resetGame(); drawFrame(); }, 200);
+});
+document.getElementById('btn-menu-r').addEventListener('click', () => {
+  playClick();
+  resetGame();
+  buildShapeCards();
+  showScreen('menu');
+});
+document.getElementById('btn-victory-restart').addEventListener('click', () => {
+  playClick();
+  resetLevelProgress();
+  buildShapeCards();
+  showScreen('game');
+  initGame();
+});
+document.getElementById('btn-victory-menu').addEventListener('click', () => {
+  playClick();
+  resetLevelProgress();
+  buildShapeCards();
+  showScreen('menu');
+});
+
+// ==================== CANVAS GAME ====================
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const hint = document.getElementById('game-hint');
+
+let points = [];
+let drawing = false;
+let animFrame = null;
+let gameState = 'idle';
+let drawTickTimer = 0;
+
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  if (gameState !== 'idle') drawFrame();
+}
+window.addEventListener('resize', resizeCanvas);
+
+function initGame() {
+  resetGame();
+  resizeCanvas();
+  const shape = SHAPES.find(s => s.id === selectedShapeId);
+  const best = getBest(selectedShapeId);
+  document.getElementById('topbar-best').textContent = best > 0 ? best + '%' : '—';
+  document.getElementById('topbar-shape').textContent = shape ? shape.name : '';
+  const levelLabel = document.getElementById('topbar-level-label');
+  if (levelLabel) levelLabel.textContent = 'Уровень ' + currentLevel;
+  updateGameProgressBar();
+  hint.textContent = shape ? shape.hint : 'Нарисуй фигуру';
+  hint.style.opacity = '1';
+  gameState = 'idle';
+  drawFrame();
+}
+
+function updateGameProgressBar() {
+  const bar = document.getElementById('game-level-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  for (let i = 1; i <= TOTAL_LEVELS; i++) {
+    const pip = document.createElement('div');
+    pip.className = 'level-pip' + (i < currentLevel ? ' done' : (i === currentLevel ? ' active' : ''));
+    bar.appendChild(pip);
+  }
+  const prog = document.getElementById('topbar-progress');
+  if (prog) prog.textContent = levelCompletedShapes.size + '/' + SHAPES.length + ' фигур';
+}
+
+function resetGame() {
+  points = [];
+  drawing = false;
+  gameState = 'idle';
+  drawTickTimer = 0;
+  document.getElementById('result-overlay').classList.remove('show');
+  if (animFrame) cancelAnimationFrame(animFrame);
+  animFrame = null;
+}
+
+// ==================== DRAW FRAME ====================
+function drawFrame() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const cx = W / 2, cy = H / 2;
+  const shape = SHAPES.find(s => s.id === selectedShapeId);
+  const col = shape ? shape.color : '#7c4dff';
+
+  // Grid
+  ctx.strokeStyle = 'rgba(124,77,255,0.05)';
+  ctx.lineWidth = 1;
+  const step = 40;
+  for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+  for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+  // Draw ghost guide shape
+  drawGuideShape(ctx, selectedShapeId, cx, cy, W, H, col);
+
+  // Draw user path
+  if (points.length > 1) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+      const mx = (points[i-1].x + points[i].x) / 2;
+      const my = (points[i-1].y + points[i].y) / 2;
+      ctx.quadraticCurveTo(points[i-1].x, points[i-1].y, mx, my);
+    }
+    ctx.lineTo(points[points.length-1].x, points[points.length-1].y);
+
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#00e5ff');
+    grad.addColorStop(0.5, '#7c4dff');
+    grad.addColorStop(1, '#ffd740');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#7c4dff';
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    ctx.arc(points[0].x, points[0].y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#00e5ff';
+    ctx.fill();
+  }
+
+  // If done — show ideal shape overlay
+  if (gameState === 'done' && points.length > 5) {
+    drawIdealOverlay(ctx, selectedShapeId, points, cx, cy, W, H);
+  }
+}
+
+function drawGuideShape(ctx, shapeId, cx, cy, W, H) {
+  const size = Math.min(W, H) * 0.35;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 5]);
+
+  switch(shapeId) {
+    case 'circle':
+      ctx.beginPath();
+      ctx.arc(cx, cy, size, 0, Math.PI * 2);
+      ctx.stroke();
+      // Center dot
+      drawCenterDot(ctx, cx, cy);
+      break;
+    case 'square': {
+      const h = size * 1.3;
+      ctx.beginPath();
+      ctx.rect(cx - h, cy - h, h * 2, h * 2);
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'triangle': {
+      const r = size * 1.2;
+      ctx.beginPath();
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
+        if (i === 0) ctx.moveTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+        else ctx.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'star': {
+      const outerR = size * 1.1, innerR = size * 0.45;
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+        const r2 = i % 2 === 0 ? outerR : innerR;
+        if (i === 0) ctx.moveTo(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a));
+        else ctx.lineTo(cx + r2 * Math.cos(a), cy + r2 * Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'diamond': {
+      const d = size * 1.2;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - d);
+      ctx.lineTo(cx + d * 0.72, cy);
+      ctx.lineTo(cx, cy + d);
+      ctx.lineTo(cx - d * 0.72, cy);
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'spiral': {
+      ctx.beginPath();
+      const turns = 3;
+      const maxR = size * 1.1;
+      const steps = 200;
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const a = t * turns * Math.PI * 2 - Math.PI / 2;
+        const r2 = t * maxR;
+        const px = cx + r2 * Math.cos(a);
+        const py = cy + r2 * Math.sin(a);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+  }
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawIdealOverlay(ctx, shapeId, pts, cx, cy, W, H) {
+  // Just show a subtle ideal outline at estimated size
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,215,64,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 5]);
+
+  const info = getShapeInfo(pts, shapeId, cx, cy);
+  const { estCx, estCy, estSize } = info;
+
+  switch(shapeId) {
+    case 'circle':
+      ctx.beginPath();
+      ctx.arc(estCx, estCy, estSize, 0, Math.PI * 2);
+      ctx.stroke();
+      break;
+    case 'square': {
+      const h = estSize;
+      ctx.beginPath();
+      ctx.rect(estCx - h, estCy - h, h * 2, h * 2);
+      ctx.stroke();
+      break;
+    }
+    case 'triangle': {
+      ctx.beginPath();
+      for (let i = 0; i < 3; i++) {
+        const a = (i / 3) * Math.PI * 2 - Math.PI / 2;
+        if (i === 0) ctx.moveTo(estCx + estSize * Math.cos(a), estCy + estSize * Math.sin(a));
+        else ctx.lineTo(estCx + estSize * Math.cos(a), estCy + estSize * Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.stroke();
+      break;
+    }
+    case 'diamond': {
+      ctx.beginPath();
+      ctx.moveTo(estCx, estCy - estSize);
+      ctx.lineTo(estCx + estSize * 0.72, estCy);
+      ctx.lineTo(estCx, estCy + estSize);
+      ctx.lineTo(estCx - estSize * 0.72, estCy);
+      ctx.closePath();
+      ctx.stroke();
+      break;
+    }
+    case 'star': {
+      const outerR = estSize, innerR = estSize * 0.42;
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) {
+        const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+        const r2 = i % 2 === 0 ? outerR : innerR;
+        if (i === 0) ctx.moveTo(estCx + r2 * Math.cos(a), estCy + r2 * Math.sin(a));
+        else ctx.lineTo(estCx + r2 * Math.cos(a), estCy + r2 * Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.stroke();
+      break;
+    }
+  }
+
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawCenterDot(ctx, cx, cy) {
+  ctx.setLineDash([]);
+  const dotGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 9);
+  dotGrad.addColorStop(0, '#ffffff');
+  dotGrad.addColorStop(0.4, '#00e5ff');
+  dotGrad.addColorStop(1, 'rgba(0,229,255,0)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+  ctx.fillStyle = dotGrad;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff';
+  ctx.fill();
+  ctx.setLineDash([6, 5]);
+}
+
+// ==================== SHAPE INFO (for overlay & scoring) ====================
+function getShapeInfo(pts, shapeId, cx, cy) {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  pts.forEach(p => {
+    if (p.x < minX) minX = p.x;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.y > maxY) maxY = p.y;
+  });
+  const estCx = (minX + maxX) / 2;
+  const estCy = (minY + maxY) / 2;
+  const estSize = Math.max(maxX - minX, maxY - minY) / 2;
+  return { estCx, estCy, estSize, minX, maxX, minY, maxY };
+}
+
+// ==================== SCORING (STRICT) ====================
+function computeScore(pts, shapeId) {
+  if (pts.length < 20) return { total: 0, breakdown: {} };
+
+  switch(shapeId) {
+    case 'circle':    return scoreCircle(pts);
+    case 'square':    return scorePolygon(pts, 4, 0);
+    case 'triangle':  return scorePolygon(pts, 3, -Math.PI/2);
+    case 'star':      return scoreStar(pts);
+    case 'diamond':   return scoreDiamond(pts);
+    case 'spiral':    return scoreSpiral(pts);
+    default:          return scoreCircle(pts);
+  }
+}
+
+// ---- Circle ----
+function scoreCircle(pts) {
+  const cx = pts.reduce((s,p) => s + p.x, 0) / pts.length;
+  const cy = pts.reduce((s,p) => s + p.y, 0) / pts.length;
+  const radii = pts.map(p => Math.hypot(p.x - cx, p.y - cy));
+  const r = radii.reduce((a, b) => a + b, 0) / radii.length;
+
+  const variance = radii.reduce((acc, ri) => acc + (ri - r) ** 2, 0) / radii.length;
+  const stdDev = Math.sqrt(variance);
+  const roundness = Math.max(0, 1 - (stdDev / r) * 1.8);   // human feel
+
+  const angles = pts.map(p => Math.atan2(p.y - cy, p.x - cx));
+  const sectors = 36;
+  const sectorSet = new Set(angles.map(a => Math.floor(((a + Math.PI) / (2 * Math.PI)) * sectors)));
+  const coverage = sectorSet.size / sectors;
+
+  const closureDist = Math.hypot(pts[0].x - pts[pts.length-1].x, pts[0].y - pts[pts.length-1].y);
+  const closure = Math.max(0, 1 - (closureDist / (r * 1.5)) * 1.3);
+
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  pts.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
+  const w = maxX - minX, h = maxY - minY;
+  const aspect = w > 0 && h > 0 ? Math.min(w, h) / Math.max(w, h) : 0;
+
+  const raw = roundness * 0.50 + closure * 0.20 + coverage * 0.18 + aspect * 0.12;
+  const total = strictScore(raw);
+  return {
+    total,
+    breakdown: {
+      'Округлость': pct(roundness),
+      'Замкнутость': pct(closure),
+      'Покрытие': pct(coverage),
+      'Форма': pct(aspect),
+    }
+  };
+}
+
+// ---- Polygon-based (square, triangle) ----
+// Uses point-to-nearest-edge distance — robust regardless of rotation or scale
+function scorePolygon(pts, sides, _startAngle) {
+  const cx = pts.reduce((s,p) => s + p.x, 0) / pts.length;
+  const cy = pts.reduce((s,p) => s + p.y, 0) / pts.length;
+
+  // Estimate size from bounding box
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+  const w=maxX-minX, h=maxY-minY;
+  const size = Math.max(w, h) / 2;
+
+  // Try many rotations, pick best (so player can draw triangle any orientation)
+  const rotSteps = 72;
+  let bestShapeScore = 0;
+  for (let ri = 0; ri < rotSteps; ri++) {
+    const rot = (ri / rotSteps) * (2 * Math.PI / sides);
+    // Build ideal polygon vertices at this rotation
+    const verts = [];
+    for (let i = 0; i < sides; i++) {
+      const a = rot + (i / sides) * 2 * Math.PI;
+      verts.push({ x: cx + size * Math.cos(a), y: cy + size * Math.sin(a) });
+    }
+    // For each drawn point, find distance to nearest edge of ideal polygon
+    const totalDist = pts.reduce((sum, p) => {
+      let minDist = Infinity;
+      for (let i = 0; i < sides; i++) {
+        const A = verts[i], B = verts[(i+1) % sides];
+        minDist = Math.min(minDist, pointToSegDist(p, A, B));
+      }
+      return sum + minDist;
+    }, 0);
+    const avgDist = totalDist / pts.length;
+    const score = Math.max(0, 1 - (avgDist / size) * 2.5);
+    if (score > bestShapeScore) bestShapeScore = score;
+  }
+
+  const radii = pts.map(p => Math.hypot(p.x - cx, p.y - cy));
+  const r = radii.reduce((a,b) => a+b, 0) / radii.length;
+  const closure = closureScore(pts, r);
+  const angles = pts.map(p => Math.atan2(p.y-cy,p.x-cx));
+  const sectorSet = new Set(angles.map(a=>Math.floor(((a+Math.PI)/(2*Math.PI))*36)));
+  const coverage = sectorSet.size / 36;
+  const aspect = sides===4 ? Math.min(w,h)/Math.max(w,h) : 1;
+
+  const raw = bestShapeScore*0.55 + closure*0.18 + coverage*0.15 + aspect*0.12;
+  const total = strictScore(raw);
+  return {
+    total,
+    breakdown: {
+      'Точность': pct(bestShapeScore),
+      'Замкнутость': pct(closure),
+      'Покрытие': pct(coverage),
+      ...(sides===4 ? {'Пропорции': pct(aspect)} : {}),
+    }
+  };
+}
+
+// Distance from point P to segment AB
+function pointToSegDist(P, A, B) {
+  const dx = B.x-A.x, dy = B.y-A.y;
+  const lenSq = dx*dx + dy*dy;
+  if (lenSq === 0) return Math.hypot(P.x-A.x, P.y-A.y);
+  const t = Math.max(0, Math.min(1, ((P.x-A.x)*dx + (P.y-A.y)*dy) / lenSq));
+  return Math.hypot(P.x - (A.x + t*dx), P.y - (A.y + t*dy));
+}
+
+// ---- Star ----
+function scoreStar(pts) {
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
+  const r = radii.reduce((a,b)=>a+b,0)/radii.length;
+
+  const outerR = r * 1.4, innerR = r * 0.6;
+  const deviations = pts.map(p => {
+    const angle = Math.atan2(p.y-cy, p.x-cx);
+    const norm = ((angle + Math.PI/2) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+    const segA = (2*Math.PI)/10;
+    const sector = Math.floor(norm/segA);
+    const isOuter = sector%2===0;
+    const idealR = isOuter ? outerR : innerR;
+    const actual = Math.hypot(p.x-cx,p.y-cy);
+    return Math.abs(actual-idealR)/r;
+  });
+  const avgDev = deviations.reduce((a,b)=>a+b,0)/deviations.length;
+  const shapeScore = Math.max(0, 1-avgDev*2.5);
+
+  const angles = pts.map(p=>Math.atan2(p.y-cy,p.x-cx));
+  const sectorSet = new Set(angles.map(a=>Math.floor(((a+Math.PI)/(2*Math.PI))*36)));
+  const coverage = sectorSet.size/36;
+
+  const cl = closureScore(pts,r);
+  const raw = shapeScore*0.55+cl*0.20+coverage*0.25;
+  const total = strictScore(raw);
+  return {
+    total,
+    breakdown: { 'Точность': pct(shapeScore), 'Замкнутость': pct(cl), 'Покрытие': pct(coverage) }
+  };
+}
+
+// ---- Diamond ----
+function scoreDiamond(pts) {
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
+  const r = radii.reduce((a,b)=>a+b,0)/radii.length;
+
+  const deviations = pts.map(p => {
+    const angle = Math.atan2(p.y-cy,p.x-cx);
+    // Diamond: r(theta) = r / (|cos(theta)| + |sin(theta)|)
+    const idealR = r / (Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)));
+    const actual = Math.hypot(p.x-cx,p.y-cy);
+    return Math.abs(actual-idealR)/r;
+  });
+  const avgDev = deviations.reduce((a,b)=>a+b,0)/deviations.length;
+  const shapeScore = Math.max(0,1-avgDev*2.2);
+
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+  const w=maxX-minX,h=maxY-minY;
+  const aspect = Math.min(w,h)/Math.max(w,h)*0.72; // diamond should be taller
+
+  const cl=closureScore(pts,r);
+  const angles=pts.map(p=>Math.atan2(p.y-cy,p.x-cx));
+  const sectorSet=new Set(angles.map(a=>Math.floor(((a+Math.PI)/(2*Math.PI))*36)));
+  const coverage=sectorSet.size/36;
+
+  const raw=shapeScore*0.50+cl*0.20+coverage*0.18+aspect*0.12;
+  const total=strictScore(raw);
+  return {
+    total,
+    breakdown:{'Точность':pct(shapeScore),'Замкнутость':pct(cl),'Покрытие':pct(coverage),'Форма':pct(aspect)}
+  };
+}
+
+// ---- Spiral ----
+function scoreSpiral(pts) {
+  if (pts.length < 30) return { total: 0, breakdown: {} };
+
+  // Center of spiral = geometric center of all points (more stable than pts[0])
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cx));
+
+  // Use smoothed radii to check monotonic growth (ignore small jitter)
+  const window = 8;
+  const smoothed = radii.map((_,i) => {
+    const slice = radii.slice(Math.max(0,i-window), Math.min(radii.length, i+window+1));
+    return slice.reduce((a,b)=>a+b,0)/slice.length;
+  });
+
+  // Monotonic increase on smoothed radii
+  let monoViolations=0;
+  for(let i=1;i<smoothed.length;i++){
+    if(smoothed[i]<smoothed[i-1]-1) monoViolations++;
+  }
+  const monoScore=Math.max(0,1-(monoViolations/smoothed.length)*2.5);
+
+  // Smoothness of direction changes
+  let totalAngleDelta=0;
+  for(let i=2;i<pts.length;i++){
+    const a1=Math.atan2(pts[i-1].y-pts[i-2].y,pts[i-1].x-pts[i-2].x);
+    const a2=Math.atan2(pts[i].y-pts[i-1].y,pts[i].x-pts[i-1].x);
+    let da=Math.abs(a2-a1);
+    if(da>Math.PI) da=2*Math.PI-da;
+    totalAngleDelta+=da;
+  }
+  const avgDelta=totalAngleDelta/pts.length;
+  const smoothness=Math.max(0,1-avgDelta*0.9);
+
+  // Length vs size (should have at least 1.5 turns)
+  const totalLen=pts.reduce((s,p,i)=>i===0?0:s+Math.hypot(p.x-pts[i-1].x,p.y-pts[i-1].y),0);
+  const maxR=Math.max(...radii);
+  const turnScore=Math.min(1,totalLen/(maxR*2*Math.PI*1.5));
+
+  // Growth consistency: end radius should be bigger than start radius
+  const startR = radii.slice(0, Math.floor(radii.length*0.1)).reduce((a,b)=>a+b,0) / Math.floor(radii.length*0.1);
+  const endR = radii.slice(Math.floor(radii.length*0.9)).reduce((a,b)=>a+b,0) / (radii.length - Math.floor(radii.length*0.9));
+  const growthScore = Math.min(1, Math.max(0, (endR - startR) / (maxR * 0.3 + 1)));
+
+  const raw=monoScore*0.35+smoothness*0.25+turnScore*0.25+growthScore*0.15;
+  const total=strictScore(raw);
+  return {
+    total,
+    breakdown:{'Раскрутка':pct(monoScore),'Плавность':pct(smoothness),'Витки':pct(turnScore),'Рост':pct(growthScore)}
+  };
+}
+
+// ---- Helpers ----
+function closureScore(pts, r) {
+  const d=Math.hypot(pts[0].x-pts[pts.length-1].x,pts[0].y-pts[pts.length-1].y);
+  return Math.max(0,1-(d/(r*1.5))*1.3);
+}
+function pct(v) { return Math.round(Math.max(0,Math.min(1,v))*100); }
+
+// HUMAN scoring curve: raw 0..1 → final 0..100
+// Feels fair: average attempt ~55-65%, good ~70-80%, great ~85-93%, near-perfect ~95+
+function strictScore(raw) {
+  // Piecewise curve: generous in mid-range, steep only at extremes
+  // raw=1.0 → 100, raw=0.85 → ~88, raw=0.70 → ~72, raw=0.55 → ~54, raw=0.40 → ~35, raw=0.20 → ~13
+  const x = Math.max(0, Math.min(1, raw));
+  // Slight S-curve: softer than power 2.8, natural feel
+  const powered = Math.pow(x, 1.6);
+  // Boost the middle range a bit so "decent" attempts land around 55-70
+  const boosted = powered * 0.85 + x * 0.15;
+  return Math.round(Math.min(100, Math.max(0, boosted * 100)));
+}
+
+// ==================== EVENTS ====================
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  if (e.touches) return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('mousemove', moveDraw);
+canvas.addEventListener('touchmove', moveDraw, { passive: false });
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('touchend', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+
+function startDraw(e) {
+  e.preventDefault();
+  if (gameState === 'done') return;
+  drawing = true;
+  gameState = 'drawing';
+  points = [];
+  hint.style.opacity = '0';
+  points.push(getPos(e));
+  drawFrame();
+}
+function moveDraw(e) {
+  e.preventDefault();
+  if (!drawing) return;
+  const pos = getPos(e);
+  const last = points[points.length-1];
+  if (Math.hypot(pos.x-last.x,pos.y-last.y) < 3) return;
+  points.push(pos);
+  drawTickTimer++;
+  if (drawTickTimer % 8 === 0) playDrawTick();
+  drawFrame();
+}
+function endDraw(e) {
+  if (!drawing || gameState !== 'drawing') return;
+  drawing = false;
+  gameState = 'done';
+  drawFrame();
+
+  if (points.length < 20) {
+    hint.textContent = 'Слишком короткий путь — попробуй ещё!';
+    hint.style.opacity = '1';
+    setTimeout(() => { gameState = 'idle'; }, 1500);
+    return;
+  }
+
+  const result = computeScore(points, selectedShapeId);
+  currentScore = result.total;
+  const bestSoFar = getBest(selectedShapeId);
+  const isNewBest = currentScore > bestSoFar;
+  if (isNewBest) {
+    setBest(selectedShapeId, currentScore);
+    document.getElementById('topbar-best').textContent = currentScore + '%';
+    spawnSparks();
+  }
+
+  // Check if shape is passed for this level
+  const threshold = getLevelThreshold(currentLevel);
+  const shapePassed = currentScore >= threshold && !levelCompletedShapes.has(selectedShapeId);
+  if (shapePassed) {
+    markShapeComplete(selectedShapeId);
+  }
+
+  playSuccess(currentScore);
+  setTimeout(() => showResult(result, isNewBest, shapePassed), 400);
+}
+
+// ==================== RESULT ============================
+function getGrade(score) {
+  if (score >= 95) return { emoji: '🏆', text: 'Абсолютное совершенство!' };
+  if (score >= 85) return { emoji: '🎯', text: 'Превосходно!' };
+  if (score >= 70) return { emoji: '🌟', text: 'Очень хорошо!' };
+  if (score >= 55) return { emoji: '👍', text: 'Неплохо!' };
+  if (score >= 35) return { emoji: '😅', text: 'Есть над чем работать' };
+  if (score >= 15) return { emoji: '😬', text: 'Тренируйся больше!' };
+  return { emoji: '😂', text: 'Что это вообще было?' };
+}
+
+function showResult(result, isNewBest, shapePassed) {
+  const grade = getGrade(result.total);
+  document.getElementById('res-emoji').textContent = grade.emoji;
+  document.getElementById('res-grade').textContent = grade.text;
+  document.getElementById('res-score').textContent = result.total;
+
+  const threshold = getLevelThreshold(currentLevel);
+
+  // Breakdown
+  const breakEl = document.getElementById('res-breakdown');
+  breakEl.innerHTML = '';
+  if (result.breakdown) {
+    Object.entries(result.breakdown).forEach(([k,v]) => {
+      const cls = v >= 70 ? 'good' : v >= 40 ? 'mid' : 'bad';
+      const item = document.createElement('div');
+      item.className = 'breakdown-item ' + cls;
+      item.innerHTML = `<span class="bval">${v}%</span>${k}`;
+      breakEl.appendChild(item);
+    });
+  }
+
+  const bestEl = document.getElementById('res-best');
+  if (shapePassed) {
+    bestEl.classList.add('show');
+    const remaining = SHAPES.length - levelCompletedShapes.size;
+    if (isLevelComplete()) {
+      bestEl.textContent = '✅ Все фигуры уровня ' + currentLevel + ' пройдены!';
+    } else {
+      bestEl.textContent = '✅ Фигура засчитана! Осталось: ' + remaining;
+    }
+    bestEl.style.background = 'rgba(0,230,118,0.08)';
+    bestEl.style.borderColor = 'rgba(0,230,118,0.3)';
+    bestEl.style.color = 'var(--success)';
+  } else if (isNewBest) {
+    bestEl.classList.add('show');
+    bestEl.textContent = '🏆 Новый рекорд: ' + result.total + '%!';
+    bestEl.style.background = '';
+    bestEl.style.borderColor = '';
+    bestEl.style.color = '';
+  } else if (result.total < threshold && !levelCompletedShapes.has(selectedShapeId)) {
+    bestEl.classList.add('show');
+    bestEl.textContent = `⚠️ Нужно ≥${threshold}% для уровня ${currentLevel}`;
+    bestEl.style.background = 'rgba(255,82,82,0.08)';
+    bestEl.style.borderColor = 'rgba(255,82,82,0.3)';
+    bestEl.style.color = '#ff5252';
+  } else {
+    bestEl.classList.remove('show');
+  }
+
+  // Update retry button label
+  const retryBtn = document.getElementById('btn-retry');
+  if (levelCompletedShapes.has(selectedShapeId)) {
+    retryBtn.textContent = '→ Следующая';
+  } else {
+    retryBtn.textContent = '↺ Ещё раз';
+  }
+
+  document.getElementById('result-overlay').classList.add('show');
+  updateGameProgressBar();
+}
+
+// ==================== SPARKS ====================
+function spawnSparks() {
+  for (let i = 0; i < 16; i++) {
+    const s = document.createElement('div');
+    s.className = 'spark';
+    const angle = (i / 16) * Math.PI * 2;
+    s.style.cssText = `
+      left: 50%; top: 50%;
+      --dx: ${Math.cos(angle) * 60}px;
+      --dy: ${Math.sin(angle) * 60}px;
+      background: ${['#ffd740','#7c4dff','#00e5ff','#ff5722'][i%4]};
+      animation-delay: ${Math.random() * 0.2}s;
+    `;
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 1200);
+  }
+}
+
+// ==================== CONFETTI ====================
+function launchConfetti() {
+  const wrap = document.getElementById('confetti-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const colors = ['#ffd740','#7c4dff','#00e5ff','#ff5722','#00e676','#e040fb','#ff9800'];
+  for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const left = Math.random() * 100;
+    const delay = Math.random() * 2;
+    const duration = 2.5 + Math.random() * 2;
+    const size = 6 + Math.random() * 10;
+    piece.style.cssText = `
+      left: ${left}%;
+      top: -20px;
+      width: ${size}px;
+      height: ${size}px;
+      background: ${color};
+      animation-duration: ${duration}s;
+      animation-delay: ${delay}s;
+      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+    `;
+    wrap.appendChild(piece);
+    setTimeout(() => piece.remove(), (duration + delay) * 1000 + 500);
+  }
+}
+
+// ==================== YANDEX SDK ====================
+window.addEventListener('load', () => {
+  if (typeof YaGames !== 'undefined') {
+    YaGames.init().then(ysdk => {
+      window.ysdk = ysdk;
+      // Сообщаем Яндексу что игра готова (убирает экран загрузки)
+      if (ysdk.features && ysdk.features.LoadingAPI) {
+        ysdk.features.LoadingAPI.ready();
+      }
+      ysdk.getLeaderboards().then(lb => { window._lb = lb; }).catch(()=>{});
+    }).catch(()=>{});
+  }
+});
+function submitScore(score) {
+  if (window._lb && score > 0) {
+    window._lb.setLeaderboardScore('circleScore', score).catch(()=>{});
+  }
+}
+</script>
+</body>
+</html>
