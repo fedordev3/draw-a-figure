@@ -1,8 +1,10 @@
 # Draw the Shape — Precision Drawing Game
 
-**Draw the Shape** is a fast-paced, skill-based game where your goal is simple:  **recreate geometric shapes as accurately as possible using your finger.**
+### **Draw the Shape** is a fast-paced, skill-based game where your goal is simple:  **recreate geometric shapes as accurately as possible using your finger.**
 
-It sounds easy — until you try to draw a perfect circle.
+<img width="6206" height="2686" alt="photo-output" src="https://github.com/user-attachments/assets/30853897-aee3-4dbb-b7a8-e356e5c633cf" />
+
+### It sounds easy — until you try to draw a perfect circle.
 
 ## 🧠 Core Idea
 
