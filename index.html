@@ -613,10 +613,10 @@ const ALL_SHAPES = [
   },
   // Level 2 — Intermediate
   {
-    id: 'star',
-    name: 'Star',
-    hint: 'Draw a 5-pointed star',
-    svgPath: '<polygon points="25,3 30.5,19 47,19 33.5,29 38.5,45 25,35 11.5,45 16.5,29 3,19 19.5,19" fill="none" stroke="currentColor" stroke-width="2"/>',
+    id: 'oval',
+    name: 'Oval',
+    hint: 'Draw an oval (wide ellipse)',
+    svgPath: '<ellipse cx="25" cy="25" rx="22" ry="13" fill="none" stroke="currentColor" stroke-width="2.5"/>',
     color: '#ffd740',
   },
   {
@@ -627,10 +627,10 @@ const ALL_SHAPES = [
     color: '#e040fb',
   },
   {
-    id: 'pentagon',
-    name: 'Pentagon',
-    hint: 'Draw a regular pentagon',
-    svgPath: '<polygon points="25,4 46,18 38,43 12,43 4,18" fill="none" stroke="currentColor" stroke-width="2.5"/>',
+    id: 'trapezoid',
+    name: 'Trapezoid',
+    hint: 'Draw a trapezoid (wide bottom, narrow top)',
+    svgPath: '<polygon points="10,8 40,8 47,42 3,42" fill="none" stroke="currentColor" stroke-width="2.5"/>',
     color: '#ff9800',
   },
   // Level 3 — Geometric
@@ -664,11 +664,11 @@ const ALL_SHAPES = [
     color: '#ff4081',
   },
   {
-    id: 'crescent',
-    name: 'Crescent',
-    hint: 'Draw a crescent moon shape',
-    svgPath: '<path d="M35,8 A20,20 0 1,0 35,42 A14,14 0 1,1 35,8Z" fill="none" stroke="currentColor" stroke-width="2.5"/>',
-    color: '#b39ddb',
+    id: 'gem',
+    name: 'Gem 💎',
+    hint: 'Draw a gem (diamond) shape — wide top, pointed bottom',
+    svgPath: '<polygon points="10,18 25,4 40,18 25,46" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="10" y1="18" x2="40" y2="18" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2"/><line x1="25" y1="4" x2="10" y2="18" stroke="currentColor" stroke-width="1.5"/><line x1="25" y1="4" x2="40" y2="18" stroke="currentColor" stroke-width="1.5"/>',
+    color: '#00e5ff',
   },
   {
     id: 'rectangle',
@@ -693,21 +693,21 @@ const ALL_SHAPES = [
     color: '#69f0ae',
   },
   {
-    id: 'spiral',
-    name: 'Spiral',
-    hint: 'Draw a spiral starting from the center',
-    svgPath: '<path d="M25,25 m0,-4 a4,4 0 1,1 0,8 a8,8 0 1,1 0,-16 a12,12 0 1,1 0,24 a16,16 0 1,1 0,-32" fill="none" stroke="currentColor" stroke-width="2"/>',
+    id: 'zigzag',
+    name: 'Zigzag',
+    hint: 'Draw a zigzag line (W shape)',
+    svgPath: '<polyline points="3,38 13,12 23,38 33,12 43,38 47,38" fill="none" stroke="currentColor" stroke-width="2.5"/>',
     color: '#00e676',
   },
 ];
 
 // Shapes per level (indices into ALL_SHAPES)
 const SHAPES_BY_LEVEL = [
-  ['circle', 'square', 'triangle'],      // Level 1
-  ['star', 'diamond', 'pentagon'],        // Level 2
-  ['hexagon', 'arrow', 'cross'],          // Level 3
-  ['heart', 'crescent', 'rectangle'],    // Level 4
-  ['octagon', 'parallelogram', 'spiral'],// Level 5
+  ['circle', 'square', 'triangle'],          // Level 1
+  ['oval', 'diamond', 'trapezoid'],           // Level 2
+  ['hexagon', 'arrow', 'cross'],              // Level 3
+  ['heart', 'gem', 'rectangle'],               // Level 4
+  ['octagon', 'parallelogram', 'zigzag'],     // Level 5
 ];
 
 // Active shapes for current level (set by getShapesForLevel)
@@ -747,8 +747,8 @@ function playSuccess(score) {
 function playClick() { playTone(600, 'sine', 0.1, 0.1); }
 
 // ==================== LEVEL SYSTEM ====================
-// Minimum score required to pass a shape per level (1=easy, 5=hard)
-const LEVEL_THRESHOLDS = [20, 35, 50, 65, 80];
+// Minimum score required to pass a shape per level (1=easy → 5=expert)
+const LEVEL_THRESHOLDS = [40, 55, 65, 60, 85];
 const TOTAL_LEVELS = 5;
 
 // Current session state (not persisted — each play starts from level 1)
@@ -824,7 +824,10 @@ function updateMenuLevelUI() {
   });
 
   const threshold = getLevelThreshold(currentLevel);
-  if (msg) msg.textContent = `Score ≥${threshold}% on each shape to advance`;
+  if (msg) {
+    const diffLabels = ['Easy','Medium','Hard','Very Hard','Expert'];
+    msg.textContent = `Level ${currentLevel} (${diffLabels[currentLevel-1]}): Score ≥${threshold}% on each shape`;
+  }
 }
 
 // ==================== SHAPE CARDS ====================
@@ -1196,6 +1199,32 @@ function drawGuideShape(ctx, shapeId, cx, cy, W, H) {
       ctx.closePath();
       ctx.stroke();
       drawCenterDot(ctx, cx, cy);
+      // Start arrow — shows where to begin
+      ctx.save();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(0,229,255,0.7)';
+      ctx.strokeStyle = 'rgba(0,229,255,0.7)';
+      ctx.lineWidth = 1.5;
+      // Arrow pointing right at the bottom tip
+      const bx = cx, by = cy + hs * 0.8;
+      ctx.beginPath();
+      ctx.arc(bx, by, 6, 0, Math.PI*2);
+      ctx.fill();
+      // Label "START"
+      ctx.font = 'bold 10px Nunito, sans-serif';
+      ctx.fillStyle = 'rgba(0,229,255,0.8)';
+      ctx.textAlign = 'center';
+      ctx.fillText('START', bx, by + 18);
+      // Arrow showing direction (up-left)
+      const as = 10;
+      ctx.beginPath();
+      ctx.translate(cx - hs*0.6, cy - hs*0.2);
+      ctx.rotate(-Math.PI*0.45);
+      ctx.moveTo(0, 0); ctx.lineTo(-as, -as*0.5); ctx.lineTo(-as, as*0.5);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(0,229,255,0.5)';
+      ctx.fill();
+      ctx.restore();
       break;
     }
     case 'crescent': {
@@ -1207,6 +1236,57 @@ function drawGuideShape(ctx, shapeId, cx, cy, W, H) {
       ctx.arc(cx + cr * 0.35, cy, cr * 0.78, Math.PI * 1.75, Math.PI * 0.25);
       ctx.stroke();
       drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'gem': {
+      // Gem (diamond/brill) shape with direction arrows
+      const gw = size * 1.1, gt = size * 0.7, gb = size * 1.3;
+      // top-left, top-right, bottom point, and "belt" line
+      const topL = {x: cx - gw, y: cy - gt};
+      const topR = {x: cx + gw, y: cy - gt};
+      const top  = {x: cx,       y: cy - gb};
+      const bot  = {x: cx,       y: cy + gb};
+      ctx.beginPath();
+      ctx.moveTo(topL.x, topL.y);
+      ctx.lineTo(top.x, top.y);
+      ctx.lineTo(topR.x, topR.y);
+      ctx.lineTo(bot.x, bot.y);
+      ctx.closePath();
+      ctx.stroke();
+      // Belt line
+      ctx.beginPath();
+      ctx.moveTo(topL.x, topL.y);
+      ctx.lineTo(topR.x, topR.y);
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      // Draw direction arrows along each segment
+      ctx.save();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(0,229,255,0.55)';
+      ctx.fillStyle = 'rgba(0,229,255,0.55)';
+      ctx.lineWidth = 1.5;
+      function drawArrowAt(ax, ay, angle) {
+        const as = 9;
+        ctx.save();
+        ctx.translate(ax, ay);
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-as, -as*0.5);
+        ctx.lineTo(-as, as*0.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      // top-left → top
+      drawArrowAt((topL.x+top.x)/2, (topL.y+top.y)/2, Math.atan2(top.y-topL.y, top.x-topL.x));
+      // top → top-right
+      drawArrowAt((top.x+topR.x)/2, (top.y+topR.y)/2, Math.atan2(topR.y-top.y, topR.x-top.x));
+      // top-right → bot
+      drawArrowAt((topR.x+bot.x)/2, (topR.y+bot.y)/2, Math.atan2(bot.y-topR.y, bot.x-topR.x));
+      // bot → top-left
+      drawArrowAt((bot.x+topL.x)/2, (bot.y+topL.y)/2, Math.atan2(topL.y-bot.y, topL.x-bot.x));
+      ctx.restore();
       break;
     }
     case 'rectangle': {
@@ -1238,6 +1318,41 @@ function drawGuideShape(ctx, shapeId, cx, cy, W, H) {
       ctx.lineTo(cx + pw - skew, cy + ph);
       ctx.lineTo(cx - pw - skew, cy + ph);
       ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'oval': {
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, size * 1.4, size * 0.75, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'trapezoid': {
+      const tw = size * 1.35, bw = size * 1.7, th = size * 1.1;
+      ctx.beginPath();
+      ctx.moveTo(cx - tw, cy - th);
+      ctx.lineTo(cx + tw, cy - th);
+      ctx.lineTo(cx + bw, cy + th);
+      ctx.lineTo(cx - bw, cy + th);
+      ctx.closePath();
+      ctx.stroke();
+      drawCenterDot(ctx, cx, cy);
+      break;
+    }
+    case 'zigzag': {
+      const zw = size * 1.5, zh = size * 1.0;
+      const zpts = [
+        {x: cx - zw, y: cy + zh},
+        {x: cx - zw*0.5, y: cy - zh},
+        {x: cx, y: cy + zh},
+        {x: cx + zw*0.5, y: cy - zh},
+        {x: cx + zw, y: cy + zh},
+      ];
+      ctx.beginPath();
+      ctx.moveTo(zpts[0].x, zpts[0].y);
+      for(let i=1;i<zpts.length;i++) ctx.lineTo(zpts[i].x, zpts[i].y);
       ctx.stroke();
       drawCenterDot(ctx, cx, cy);
       break;
@@ -1360,32 +1475,171 @@ function getShapeInfo(pts, shapeId, cx, cy) {
   return { estCx, estCy, estSize, minX, maxX, minY, maxY };
 }
 
-// ==================== SCORING (STRICT) ====================
+// ==================== SCORING (REALISTIC) ====================
+// Each score function first checks if the drawn shape LOOKS like the target.
+// If it clearly doesn't (e.g. a circle drawn when a square is expected), returns 0.
+
 function computeScore(pts, shapeId) {
   if (pts.length < 20) return { total: 0, breakdown: {} };
 
-  switch(shapeId) {
-    case 'circle':        return scoreCircle(pts);
-    case 'square':        return scorePolygon(pts, 4, 0);
-    case 'triangle':      return scorePolygon(pts, 3, -Math.PI/2);
-    case 'star':          return scoreStar(pts);
-    case 'diamond':       return scoreDiamond(pts);
-    case 'pentagon':      return scorePolygon(pts, 5, -Math.PI/2);
-    case 'hexagon':       return scorePolygon(pts, 6, 0);
-    case 'arrow':         return scoreArrow(pts);
-    case 'cross':         return scoreCross(pts);
-    case 'heart':         return scoreHeart(pts);
-    case 'crescent':      return scoreCrescent(pts);
-    case 'rectangle':     return scoreRectangle(pts);
-    case 'octagon':       return scorePolygon(pts, 8, 0);
-    case 'parallelogram': return scoreParallelogram(pts);
-    case 'spiral':        return scoreSpiral(pts);
-    default:              return scoreCircle(pts);
+  // --- Shape recognition guard ---
+  // Returns a recognition confidence 0..1 for each shape type
+  const recog = recognizeShape(pts);
+  const targetConf = recog[shapeId] || 0;
+
+  // If the dominant recognized shape is very different from target, penalize heavily
+  const maxConf = Math.max(...Object.values(recog));
+  const dominantShape = Object.keys(recog).find(k => recog[k] === maxConf);
+
+  // If target confidence is too low AND a completely different shape is dominant → near 0
+  let recognitionPenalty = 1.0;
+  if (targetConf < 0.25 && dominantShape !== shapeId) {
+    // Completely wrong shape drawn
+    recognitionPenalty = Math.max(0, targetConf * 2); // 0 to 0.5
+  } else if (targetConf < 0.5) {
+    recognitionPenalty = 0.4 + targetConf * 1.2;
   }
+
+  let result;
+  switch(shapeId) {
+    case 'circle':        result = scoreCircle(pts); break;
+    case 'square':        result = scorePolygon(pts, 4, 0); break;
+    case 'triangle':      result = scorePolygon(pts, 3, -Math.PI/2); break;
+    case 'star':          result = scoreStar(pts); break;
+    case 'diamond':       result = scoreDiamond(pts); break;
+    case 'pentagon':      result = scorePolygon(pts, 5, -Math.PI/2); break;
+    case 'hexagon':       result = scorePolygon(pts, 6, 0); break;
+    case 'arrow':         result = scoreArrow(pts); break;
+    case 'cross':         result = scoreCross(pts); break;
+    case 'heart':         result = scoreHeart(pts); break;
+    case 'gem':           result = scoreGem(pts); break;
+    case 'crescent':      result = scoreCrescent(pts); break;
+    case 'rectangle':     result = scoreRectangle(pts); break;
+    case 'octagon':       result = scorePolygon(pts, 8, 0); break;
+    case 'parallelogram': result = scoreParallelogram(pts); break;
+    case 'oval':          result = scoreOval(pts); break;
+    case 'trapezoid':     result = scoreTrapezoid(pts); break;
+    case 'zigzag':        result = scoreZigzag(pts); break;
+    default:              result = scoreCircle(pts); break;
+  }
+
+  // Apply recognition penalty: wrong shape → low score
+  const penalized = Math.round(result.total * recognitionPenalty);
+  result.total = penalized;
+  if (recognitionPenalty < 0.7) {
+    result.breakdown['Shape?'] = pct(targetConf);
+  }
+  return result;
+}
+
+// ==================== SHAPE RECOGNITION ====================
+// Returns confidence map { shapeId: 0..1 } for what the drawing looks like.
+function recognizeShape(pts) {
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
+  const w=maxX-minX, h=maxY-minY;
+  const aspect = h>0&&w>0 ? Math.min(w,h)/Math.max(w,h) : 0;
+  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
+  const rMean = radii.reduce((a,b)=>a+b,0)/radii.length;
+  const rVariance = radii.reduce((acc,ri)=>acc+(ri-rMean)**2,0)/radii.length;
+  const rCv = rMean > 0 ? Math.sqrt(rVariance)/rMean : 1; // coefficient of variation
+  const closureDist = Math.hypot(pts[0].x-pts[pts.length-1].x, pts[0].y-pts[pts.length-1].y);
+  const isClosed = closureDist < rMean * 1.2;
+  const totalLen = pts.reduce((s,p,i)=>i===0?0:s+Math.hypot(p.x-pts[i-1].x,p.y-pts[i-1].y),0);
+
+  // Count corners (sharp direction changes)
+  const corners = countCorners(pts);
+  // Count direction sign changes on radius (for spirals/crescents)
+  const smoothed = pts.map((_,i)=>radii.slice(Math.max(0,i-4),Math.min(pts.length,i+5)).reduce((a,b)=>a+b,0)/Math.min(9,pts.length));
+  let monoViol=0;
+  for(let i=1;i<smoothed.length;i++) if(smoothed[i]<smoothed[i-1]-2) monoViol++;
+  const isSpiral = monoViol/pts.length < 0.08 && totalLen > rMean*4;
+
+  const conf = {};
+
+  // CIRCLE: low radius variation, closed, few corners
+  conf.circle = Math.max(0, (1 - rCv*2.5) * (isClosed?1:0.2) * (1 - Math.min(1, corners/8)*0.8));
+
+  // SQUARE / RECTANGLE: 4 corners, closed, aspect ratio
+  const squareness = aspect > 0.7 ? 1 : aspect * 1.4;
+  conf.square = Math.max(0, (corners>=3&&corners<=6 ? 0.8 : 0.2) * squareness * (isClosed?1:0.2));
+  conf.rectangle = Math.max(0, (corners>=3&&corners<=6 ? 0.8 : 0.2) * (aspect<0.7?1:0.4) * (isClosed?1:0.2));
+
+  // TRIANGLE: 3 corners
+  conf.triangle = Math.max(0, (corners>=2&&corners<=4 ? 0.9 : 0.15) * (isClosed?1:0.2) * (aspect>0.4?1:0.5));
+
+  // DIAMOND: 4 corners, tall aspect
+  const diamondAspect = h>0&&w>0 ? Math.min(w,h)/Math.max(w,h) : 0;
+  conf.diamond = Math.max(0, (corners>=3&&corners<=5 ? 0.8 : 0.15) * (diamondAspect<0.85?1:0.4) * (isClosed?1:0.2));
+
+  // HEXAGON: 6 corners
+  conf.hexagon = Math.max(0, (corners>=5&&corners<=8 ? 0.85 : 0.1) * (isClosed?1:0.2));
+
+  // OCTAGON: 8 corners
+  conf.octagon = Math.max(0, (corners>=7&&corners<=10 ? 0.85 : 0.1) * (isClosed?1:0.2));
+
+  // OVAL: closed, low radius variation, wide aspect
+  conf.oval = Math.max(0, (1 - rCv*2.0) * (isClosed?1:0.3) * (aspect<0.8?1:0.3) * (corners<5?1:0.3));
+
+  // TRAPEZOID: 4 corners, closed, wide
+  conf.trapezoid = Math.max(0, (corners>=3&&corners<=5?0.8:0.15) * (isClosed?1:0.2) * (aspect<0.8?1:0.4));
+
+  // ZIGZAG: not closed, 3-5 sharp turns, wide
+  conf.zigzag = Math.max(0, (corners>=2&&corners<=6?0.8:0.1) * (!isClosed?1:0.3) * (w>h?1:0.4));
+
+  // ARROW: wide aspect, 6-8 corners, open or closed
+  conf.arrow = Math.max(0, (corners>=5&&corners<=9 ? 0.7 : 0.1) * (aspect<0.7?1:0.3) * (w>h?1:0.3));
+
+  // CROSS: square aspect, high corner count (12), symmetric
+  conf.cross = Math.max(0, (corners>=8&&corners<=16 ? 0.8 : 0.1) * (aspect>0.7?1:0.3) * (isClosed?1:0.2));
+
+  // HEART: symmetric, closed, medium corners
+  conf.heart = Math.max(0, (corners>=2&&corners<=6 ? 0.7 : 0.1) * (isClosed?1:0.2) * (aspect>0.5?1:0.3));
+
+  // CRESCENT: open or lightly closed, arc-like
+  conf.crescent = Math.max(0, (rCv<0.6?0.7:0.15) * (!isClosed?1:0.3) * (corners<4?1:0.3));
+
+  // GEM: 4 corners, closed, taller than wide
+  conf.gem = Math.max(0, (corners>=3&&corners<=5?0.85:0.15) * (isClosed?1:0.2) * (h>w*0.8?1:0.3));
+
+  // PARALLELOGRAM: 4 corners, wide
+  conf.parallelogram = Math.max(0, (corners>=3&&corners<=5 ? 0.8 : 0.15) * (aspect<0.7?1:0.3) * (isClosed?1:0.2));
+
+  return conf;
+}
+
+function countCorners(pts) {
+  // Count significant direction changes (corners)
+  if (pts.length < 6) return 0;
+  const minDist = 8;
+  // Downsample to evenly spaced points
+  const sampled = [pts[0]];
+  let acc = 0;
+  for (let i = 1; i < pts.length; i++) {
+    acc += Math.hypot(pts[i].x-pts[i-1].x, pts[i].y-pts[i-1].y);
+    if (acc >= minDist) { sampled.push(pts[i]); acc = 0; }
+  }
+  if (sampled.length < 4) return 0;
+
+  let corners = 0;
+  const threshold = Math.PI * 0.28; // ~50 degrees = corner
+  for (let i = 1; i < sampled.length - 1; i++) {
+    const a1 = Math.atan2(sampled[i].y-sampled[i-1].y, sampled[i].x-sampled[i-1].x);
+    const a2 = Math.atan2(sampled[i+1].y-sampled[i].y, sampled[i+1].x-sampled[i].x);
+    let da = Math.abs(a2 - a1);
+    if (da > Math.PI) da = 2*Math.PI - da;
+    if (da > threshold) corners++;
+  }
+  return corners;
 }
 
 // ---- Circle ----
 function scoreCircle(pts) {
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'circle', W, H, 0.30);
+
   const cx = pts.reduce((s,p) => s + p.x, 0) / pts.length;
   const cy = pts.reduce((s,p) => s + p.y, 0) / pts.length;
   const radii = pts.map(p => Math.hypot(p.x - cx, p.y - cy));
@@ -1393,7 +1647,7 @@ function scoreCircle(pts) {
 
   const variance = radii.reduce((acc, ri) => acc + (ri - r) ** 2, 0) / radii.length;
   const stdDev = Math.sqrt(variance);
-  const roundness = Math.max(0, 1 - (stdDev / r) * 1.8);   // human feel
+  const roundness = Math.max(0, 1 - (stdDev / r) * 1.8);
 
   const angles = pts.map(p => Math.atan2(p.y - cy, p.x - cx));
   const sectors = 36;
@@ -1408,8 +1662,10 @@ function scoreCircle(pts) {
   const w = maxX - minX, h = maxY - minY;
   const aspect = w > 0 && h > 0 ? Math.min(w, h) / Math.max(w, h) : 0;
 
-  const raw = roundness * 0.50 + closure * 0.20 + coverage * 0.18 + aspect * 0.12;
-  const total = strictScore(raw);
+  // Use best of guide-based and geometry-based
+  const geomScore = roundness * 0.50 + closure * 0.20 + coverage * 0.18 + aspect * 0.12;
+  const combined = Math.max(guideScore * 0.7 + geomScore * 0.3, geomScore);
+  const total = strictScore(combined);
   return {
     total,
     breakdown: {
@@ -1421,30 +1677,226 @@ function scoreCircle(pts) {
   };
 }
 
-// ---- Polygon-based (square, triangle) ----
-// Uses point-to-nearest-edge distance — robust regardless of rotation or scale
+// ==================== GUIDE-BASED SCORING ====================
+// Generates the ideal guide points in canvas coordinates (same as drawGuideShape),
+// then measures how closely the user traced them. This means: draw ON the guide = high score.
+
+function getGuidePoints(shapeId, cx, cy, W, H, count) {
+  const size = Math.min(W, H) * 0.35;
+  const pts = [];
+  switch(shapeId) {
+    case 'circle':
+      for(let i=0;i<=count;i++){const a=(i/count)*Math.PI*2;pts.push({x:cx+size*Math.cos(a),y:cy+size*Math.sin(a)});}
+      break;
+    case 'square':{
+      const h=size*1.3;
+      const corners=[{x:cx-h,y:cy-h},{x:cx+h,y:cy-h},{x:cx+h,y:cy+h},{x:cx-h,y:cy+h}];
+      for(let s=0;s<4;s++){for(let i=0;i<count/4;i++){const t=i/(count/4);const A=corners[s],B=corners[(s+1)%4];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'triangle':{
+      const r=size*1.2;const vc=[];
+      for(let i=0;i<3;i++){const a=(i/3)*Math.PI*2-Math.PI/2;vc.push({x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)});}
+      for(let s=0;s<3;s++){for(let i=0;i<count/3;i++){const t=i/(count/3);const A=vc[s],B=vc[(s+1)%3];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'star':{
+      const outerR=size*1.1,innerR=size*0.45;
+      for(let i=0;i<=count;i++){const a=(i/count)*Math.PI*2-Math.PI/2;const ri=Math.floor((i/count)*10)%2===0?outerR:innerR;pts.push({x:cx+ri*Math.cos(a),y:cy+ri*Math.sin(a)});}
+      break;}
+    case 'diamond':{
+      const d=size*1.2;
+      const vc=[{x:cx,y:cy-d},{x:cx+d*0.72,y:cy},{x:cx,y:cy+d},{x:cx-d*0.72,y:cy}];
+      for(let s=0;s<4;s++){for(let i=0;i<count/4;i++){const t=i/(count/4);const A=vc[s],B=vc[(s+1)%4];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'oval':{
+      for(let i=0;i<=count;i++){const a=(i/count)*Math.PI*2;pts.push({x:cx+size*1.4*Math.cos(a),y:cy+size*0.75*Math.sin(a)});}
+      break;}
+    case 'trapezoid':{
+      const tw=size*1.35,bw=size*1.7,th=size*1.1;
+      const vc=[{x:cx-tw,y:cy-th},{x:cx+tw,y:cy-th},{x:cx+bw,y:cy+th},{x:cx-bw,y:cy+th}];
+      for(let s=0;s<4;s++){for(let i=0;i<count/4;i++){const t=i/(count/4);const A=vc[s],B=vc[(s+1)%4];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'zigzag':{
+      const zw=size*1.5,zh=size*1.0;
+      const vc=[{x:cx-zw,y:cy+zh},{x:cx-zw*0.5,y:cy-zh},{x:cx,y:cy+zh},{x:cx+zw*0.5,y:cy-zh},{x:cx+zw,y:cy+zh}];
+      for(let s=0;s<vc.length-1;s++){for(let i=0;i<count/(vc.length-1);i++){const t=i/(count/(vc.length-1));const A=vc[s],B=vc[s+1];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'pentagon':case 'hexagon':case 'octagon':{
+      const sides={'pentagon':5,'hexagon':6,'octagon':8}[shapeId];
+      const rp=size*1.1;const vc=[];
+      for(let i=0;i<sides;i++){const a=(i/sides)*Math.PI*2-Math.PI/2;vc.push({x:cx+rp*Math.cos(a),y:cy+rp*Math.sin(a)});}
+      for(let s=0;s<sides;s++){for(let i=0;i<count/sides;i++){const t=i/(count/sides);const A=vc[s],B=vc[(s+1)%sides];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'rectangle':{
+      const rw=size*1.5,rh2=size*0.8;
+      const vc=[{x:cx-rw,y:cy-rh2},{x:cx+rw,y:cy-rh2},{x:cx+rw,y:cy+rh2},{x:cx-rw,y:cy+rh2}];
+      for(let s=0;s<4;s++){for(let i=0;i<count/4;i++){const t=i/(count/4);const A=vc[s],B=vc[(s+1)%4];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'spiral':{
+      const turns=3,maxR=size*1.1,steps=count;
+      for(let i=0;i<=steps;i++){const t=i/steps;const a=t*turns*Math.PI*2-Math.PI/2;const r2=t*maxR;pts.push({x:cx+r2*Math.cos(a),y:cy+r2*Math.sin(a)});}
+      break;}
+    case 'arrow':{
+      const aw=size*1.3,ah=size*0.8,pt2=size*1.0,stem=size*0.38;
+      const vc=[{x:cx-aw,y:cy-stem},{x:cx,y:cy-stem},{x:cx,y:cy-ah},{x:cx+pt2,y:cy},{x:cx,y:cy+ah},{x:cx,y:cy+stem},{x:cx-aw,y:cy+stem}];
+      for(let s=0;s<vc.length;s++){for(let i=0;i<count/vc.length;i++){const t=i/(count/vc.length);const A=vc[s],B=vc[(s+1)%vc.length];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'cross':{
+      const cs=size*1.1,arm=size*0.42;
+      const vc=[{x:cx-arm,y:cy-cs},{x:cx+arm,y:cy-cs},{x:cx+arm,y:cy-arm},{x:cx+cs,y:cy-arm},{x:cx+cs,y:cy+arm},{x:cx+arm,y:cy+arm},{x:cx+arm,y:cy+cs},{x:cx-arm,y:cy+cs},{x:cx-arm,y:cy+arm},{x:cx-cs,y:cy+arm},{x:cx-cs,y:cy-arm},{x:cx-arm,y:cy-arm}];
+      for(let s=0;s<vc.length;s++){for(let i=0;i<count/vc.length;i++){const t=i/(count/vc.length);const A=vc[s],B=vc[(s+1)%vc.length];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'parallelogram':{
+      const pw=size*1.4,ph=size*0.7,skew=size*0.5;
+      const vc=[{x:cx-pw+skew,y:cy-ph},{x:cx+pw+skew,y:cy-ph},{x:cx+pw-skew,y:cy+ph},{x:cx-pw-skew,y:cy+ph}];
+      for(let s=0;s<4;s++){for(let i=0;i<count/4;i++){const t=i/(count/4);const A=vc[s],B=vc[(s+1)%4];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    case 'heart':{
+      const hs=size*1.1;
+      // Approximate heart as parametric
+      for(let i=0;i<=count;i++){
+        const t=(i/count)*Math.PI*2;
+        const hx=cx+hs*0.8*Math.sin(t)*Math.sin(t)*Math.sin(t);
+        const hy=cy-hs*0.7*(Math.cos(t)-0.5*Math.cos(2*t)-0.25*Math.cos(3*t)-0.125*Math.cos(4*t));
+        pts.push({x:hx,y:hy});
+      }
+      break;}
+    case 'crescent':{
+      // Outer arc
+      for(let i=0;i<=count*0.6;i++){const t=i/(count*0.6);const a=Math.PI*0.25+t*Math.PI*1.5;pts.push({x:cx+size*1.1*Math.cos(a),y:cy+size*1.1*Math.sin(a)});}
+      // Inner arc (offset circle)
+      const cx2=cx+size*1.1*0.35;
+      for(let i=0;i<=count*0.4;i++){const t=i/(count*0.4);const a=Math.PI*1.75-t*Math.PI*1.5;pts.push({x:cx2+size*1.1*0.78*Math.cos(a),y:cy+size*1.1*0.78*Math.sin(a)});}
+      break;}
+    case 'gem':{
+      const gw=size*1.1,gt=size*0.7,gb=size*1.3;
+      const topL={x:cx-gw,y:cy-gt};
+      const topR={x:cx+gw,y:cy-gt};
+      const top={x:cx,y:cy-gb};
+      const bot={x:cx,y:cy+gb};
+      const vc=[topL,top,topR,bot];
+      for(let s=0;s<vc.length;s++){for(let i=0;i<count/vc.length;i++){const t=i/(count/vc.length);const A=vc[s],B=vc[(s+1)%vc.length];pts.push({x:A.x+(B.x-A.x)*t,y:A.y+(B.y-A.y)*t});}}
+      break;}
+    default:
+      for(let i=0;i<=count;i++){const a=(i/count)*Math.PI*2;pts.push({x:cx+size*Math.cos(a),y:cy+size*Math.sin(a)});}
+  }
+  return pts;
+}
+
+// Score drawn pts against the guide shape in canvas coords.
+// tolerance: max pixel distance considered "on the line"
+function scoreAgainstGuide(pts, shapeId, W, H, toleranceFactor) {
+  const cx = W/2, cy = H/2;
+  const size = Math.min(W, H) * 0.35;
+  const tol = toleranceFactor * size;
+  const guidePts = getGuidePoints(shapeId, cx, cy, W, H, 300);
+  if (guidePts.length < 4) return 0;
+
+  const totalDist = pts.reduce((sum, p) => {
+    let minD = Infinity;
+    for (const g of guidePts) {
+      const d = Math.hypot(p.x-g.x, p.y-g.y);
+      if (d < minD) minD = d;
+    }
+    return sum + minD;
+  }, 0);
+  const avgDist = totalDist / pts.length;
+
+  const step = Math.max(1, Math.floor(guidePts.length / 60));
+  let covered = 0;
+  for (let i = 0; i < guidePts.length; i += step) {
+    const g = guidePts[i];
+    for (const p of pts) {
+      if (Math.hypot(p.x-g.x, p.y-g.y) < tol * 1.5) { covered++; break; }
+    }
+  }
+  const coverageRatio = covered / Math.ceil(guidePts.length / step);
+
+  const proximity = Math.max(0, 1 - (avgDist / (tol)));
+  return proximity * 0.65 + coverageRatio * 0.35;
+}
+
+// Proximity-only: just checks if drawn points stay near the guide line.
+// Does NOT require full coverage — good for complex shapes like star/spiral/pentagon.
+function scoreProximityOnly(pts, shapeId, W, H, toleranceFactor) {
+  const cx = W/2, cy = H/2;
+  const size = Math.min(W, H) * 0.35;
+  const tol = toleranceFactor * size;
+  const guidePts = getGuidePoints(shapeId, cx, cy, W, H, 400);
+  if (guidePts.length < 4) return 0;
+
+  // For each drawn point find the nearest guide point
+  let onLine = 0;
+  for (const p of pts) {
+    let minD = Infinity;
+    for (const g of guidePts) {
+      const d = Math.hypot(p.x-g.x, p.y-g.y);
+      if (d < minD) minD = d;
+    }
+    // Soft score: 1 if right on line, fades to 0 at 2x tolerance
+    onLine += Math.max(0, 1 - minD / tol);
+  }
+  return Math.min(1, onLine / pts.length);
+}
+
+// ---- Polygon-based (square, triangle, pentagon, hexagon, octagon) ----
 function scorePolygon(pts, sides, _startAngle) {
+  const W = canvas.width, H = canvas.height;
+
+  // Pentagon gets the same forgiving treatment as star/spiral
+  if (sides === 5) {
+    const proximity = scoreProximityOnly(pts, 'pentagon', W, H, 0.55);
+    const cx2 = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+    const cy2 = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+    const r2 = pts.map(p=>Math.hypot(p.x-cx2,p.y-cy2)).reduce((a,b)=>a+b,0)/pts.length;
+    const cl2 = closureScore(pts, r2);
+    const raw2 = proximity*0.80 + cl2*0.20;
+    return { total: strictScore(raw2), breakdown: {'On-line': pct(proximity), 'Closure': pct(cl2)} };
+  }
+
+  // Octagon — super forgiving, 85+ if on the line
+  if (sides === 8) {
+    const proximity = scoreProximityOnly(pts, 'octagon', W, H, 0.60);
+    const cx2 = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+    const cy2 = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+    const r2 = pts.map(p=>Math.hypot(p.x-cx2,p.y-cy2)).reduce((a,b)=>a+b,0)/pts.length;
+    const cl2 = closureScore(pts, r2);
+    const raw2 = proximity*0.90 + cl2*0.10;
+    // Boost: if on the line, push score to 85+
+    const boosted = Math.min(1, raw2 * 1.18);
+    return { total: softScore(boosted), breakdown: {'On-line': pct(proximity), 'Closure': pct(cl2)} };
+  }
+
+  // Hexagon — forgiving proximity scoring (6 sides is hard)
+  if (sides === 6) {
+    const proximity = scoreProximityOnly(pts, 'hexagon', W, H, 0.55);
+    const cx2 = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+    const cy2 = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+    const r2 = pts.map(p=>Math.hypot(p.x-cx2,p.y-cy2)).reduce((a,b)=>a+b,0)/pts.length;
+    const cl2 = closureScore(pts, r2);
+    // Proximity weighted heavily — if you draw on the line, you pass
+    const raw2 = proximity*0.85 + cl2*0.15;
+    return { total: softScore(raw2), breakdown: {'On-line': pct(proximity), 'Closure': pct(cl2)} };
+  }
+
+  const guideScore = scoreAgainstGuide(pts, sides===4?'square':sides===3?'triangle':'octagon', W, H, 0.32);
+
   const cx = pts.reduce((s,p) => s + p.x, 0) / pts.length;
   const cy = pts.reduce((s,p) => s + p.y, 0) / pts.length;
-
-  // Estimate size from bounding box
   let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
   pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
   const w=maxX-minX, h=maxY-minY;
   const size = Math.max(w, h) / 2;
 
-  // Try many rotations, pick best (so player can draw triangle any orientation)
-  const rotSteps = 72;
+  // Also keep the rotation-agnostic score as backup
+  const rotSteps = 36;
   let bestShapeScore = 0;
   for (let ri = 0; ri < rotSteps; ri++) {
     const rot = (ri / rotSteps) * (2 * Math.PI / sides);
-    // Build ideal polygon vertices at this rotation
     const verts = [];
     for (let i = 0; i < sides; i++) {
       const a = rot + (i / sides) * 2 * Math.PI;
       verts.push({ x: cx + size * Math.cos(a), y: cy + size * Math.sin(a) });
     }
-    // For each drawn point, find distance to nearest edge of ideal polygon
     const totalDist = pts.reduce((sum, p) => {
       let minDist = Infinity;
       for (let i = 0; i < sides; i++) {
@@ -1454,7 +1906,7 @@ function scorePolygon(pts, sides, _startAngle) {
       return sum + minDist;
     }, 0);
     const avgDist = totalDist / pts.length;
-    const score = Math.max(0, 1 - (avgDist / size) * 2.5);
+    const score = Math.max(0, 1 - (avgDist / size) * 2.2);
     if (score > bestShapeScore) bestShapeScore = score;
   }
 
@@ -1466,12 +1918,14 @@ function scorePolygon(pts, sides, _startAngle) {
   const coverage = sectorSet.size / 36;
   const aspect = sides===4 ? Math.min(w,h)/Math.max(w,h) : 1;
 
-  const raw = bestShapeScore*0.55 + closure*0.18 + coverage*0.15 + aspect*0.12;
+  // Use best of guide-based or rotation-agnostic
+  const combinedShape = Math.max(guideScore, bestShapeScore * 0.9);
+  const raw = combinedShape*0.60 + closure*0.18 + coverage*0.12 + (sides===4?aspect*0.10:0);
   const total = strictScore(raw);
   return {
     total,
     breakdown: {
-      'Accuracy': pct(bestShapeScore),
+      'Accuracy': pct(combinedShape),
       'Closure': pct(closure),
       'Coverage': pct(coverage),
       ...(sides===4 ? {'Proportions': pct(aspect)} : {}),
@@ -1490,143 +1944,76 @@ function pointToSegDist(P, A, B) {
 
 // ---- Star ----
 function scoreStar(pts) {
+  const W = canvas.width, H = canvas.height;
+  // Very forgiving — big tolerance, mostly proximity, don't penalize for partial coverage
+  const proximity = scoreProximityOnly(pts, 'star', W, H, 0.55);
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
   const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
   const r = radii.reduce((a,b)=>a+b,0)/radii.length;
-
-  const outerR = r * 1.4, innerR = r * 0.6;
-  const deviations = pts.map(p => {
-    const angle = Math.atan2(p.y-cy, p.x-cx);
-    const norm = ((angle + Math.PI/2) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
-    const segA = (2*Math.PI)/10;
-    const sector = Math.floor(norm/segA);
-    const isOuter = sector%2===0;
-    const idealR = isOuter ? outerR : innerR;
-    const actual = Math.hypot(p.x-cx,p.y-cy);
-    return Math.abs(actual-idealR)/r;
-  });
-  const avgDev = deviations.reduce((a,b)=>a+b,0)/deviations.length;
-  const shapeScore = Math.max(0, 1-avgDev*2.5);
-
-  const angles = pts.map(p=>Math.atan2(p.y-cy,p.x-cx));
-  const sectorSet = new Set(angles.map(a=>Math.floor(((a+Math.PI)/(2*Math.PI))*36)));
-  const coverage = sectorSet.size/36;
-
   const cl = closureScore(pts,r);
-  const raw = shapeScore*0.55+cl*0.20+coverage*0.25;
+  const raw = proximity*0.80 + cl*0.20;
   const total = strictScore(raw);
-  return {
-    total,
-    breakdown: { 'Accuracy': pct(shapeScore), 'Closure': pct(cl), 'Coverage': pct(coverage) }
-  };
+  return { total, breakdown: { 'On-line': pct(proximity), 'Closure': pct(cl) } };
 }
 
 // ---- Diamond ----
 function scoreDiamond(pts) {
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'diamond', W, H, 0.30);
+
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
   const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
   const r = radii.reduce((a,b)=>a+b,0)/radii.length;
+  const cl = closureScore(pts,r);
+  const angles = pts.map(p=>Math.atan2(p.y-cy,p.x-cx));
+  const sectorSet = new Set(angles.map(a=>Math.floor(((a+Math.PI)/(2*Math.PI))*36)));
+  const coverage = sectorSet.size/36;
 
-  const deviations = pts.map(p => {
-    const angle = Math.atan2(p.y-cy,p.x-cx);
-    // Diamond: r(theta) = r / (|cos(theta)| + |sin(theta)|)
-    const idealR = r / (Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)));
-    const actual = Math.hypot(p.x-cx,p.y-cy);
-    return Math.abs(actual-idealR)/r;
-  });
-  const avgDev = deviations.reduce((a,b)=>a+b,0)/deviations.length;
-  const shapeScore = Math.max(0,1-avgDev*2.2);
-
-  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-  pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
-  const w=maxX-minX,h=maxY-minY;
-  const aspect = Math.min(w,h)/Math.max(w,h)*0.72; // diamond should be taller
-
-  const cl=closureScore(pts,r);
-  const angles=pts.map(p=>Math.atan2(p.y-cy,p.x-cx));
-  const sectorSet=new Set(angles.map(a=>Math.floor(((a+Math.PI)/(2*Math.PI))*36)));
-  const coverage=sectorSet.size/36;
-
-  const raw=shapeScore*0.50+cl*0.20+coverage*0.18+aspect*0.12;
-  const total=strictScore(raw);
-  return {
-    total,
-    breakdown:{'Accuracy':pct(shapeScore),'Closure':pct(cl),'Coverage':pct(coverage),'Shape':pct(aspect)}
-  };
+  const raw = guideScore*0.60 + cl*0.22 + coverage*0.18;
+  const total = strictScore(raw);
+  return { total, breakdown:{'Accuracy':pct(guideScore),'Closure':pct(cl),'Coverage':pct(coverage)} };
 }
 
 // ---- Spiral ----
 function scoreSpiral(pts) {
-  if (pts.length < 30) return { total: 0, breakdown: {} };
-
-  // Center of spiral = geometric center of all points (more stable than pts[0])
+  if (pts.length < 20) return { total: 0, breakdown: {} };
+  const W = canvas.width, H = canvas.height;
+  // Very forgiving proximity — just check if points are near the guide spiral
+  const proximity = scoreProximityOnly(pts, 'spiral', W, H, 0.60);
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
-  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cx));
-
-  // Use smoothed radii to check monotonic growth (ignore small jitter)
-  const window = 8;
-  const smoothed = radii.map((_,i) => {
-    const slice = radii.slice(Math.max(0,i-window), Math.min(radii.length, i+window+1));
-    return slice.reduce((a,b)=>a+b,0)/slice.length;
-  });
-
-  // Monotonic increase on smoothed radii
-  let monoViolations=0;
-  for(let i=1;i<smoothed.length;i++){
-    if(smoothed[i]<smoothed[i-1]-1) monoViolations++;
-  }
-  const monoScore=Math.max(0,1-(monoViolations/smoothed.length)*2.5);
-
-  // Smoothness of direction changes
-  let totalAngleDelta=0;
-  for(let i=2;i<pts.length;i++){
-    const a1=Math.atan2(pts[i-1].y-pts[i-2].y,pts[i-1].x-pts[i-2].x);
-    const a2=Math.atan2(pts[i].y-pts[i-1].y,pts[i].x-pts[i-1].x);
-    let da=Math.abs(a2-a1);
-    if(da>Math.PI) da=2*Math.PI-da;
-    totalAngleDelta+=da;
-  }
-  const avgDelta=totalAngleDelta/pts.length;
-  const smoothness=Math.max(0,1-avgDelta*0.9);
-
-  // Length vs size (should have at least 1.5 turns)
-  const totalLen=pts.reduce((s,p,i)=>i===0?0:s+Math.hypot(p.x-pts[i-1].x,p.y-pts[i-1].y),0);
-  const maxR=Math.max(...radii);
-  const turnScore=Math.min(1,totalLen/(maxR*2*Math.PI*1.5));
-
-  // Growth consistency: end radius should be bigger than start radius
-  const startR = radii.slice(0, Math.floor(radii.length*0.1)).reduce((a,b)=>a+b,0) / Math.floor(radii.length*0.1);
-  const endR = radii.slice(Math.floor(radii.length*0.9)).reduce((a,b)=>a+b,0) / (radii.length - Math.floor(radii.length*0.9));
-  const growthScore = Math.min(1, Math.max(0, (endR - startR) / (maxR * 0.3 + 1)));
-
-  const raw=monoScore*0.35+smoothness*0.25+turnScore*0.25+growthScore*0.15;
-  const total=strictScore(raw);
-  return {
-    total,
-    breakdown:{'Unwinding':pct(monoScore),'Smoothness':pct(smoothness),'Turns':pct(turnScore),'Growth':pct(growthScore)}
-  };
+  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
+  const totalLen = pts.reduce((s,p,i)=>i===0?0:s+Math.hypot(p.x-pts[i-1].x,p.y-pts[i-1].y),0);
+  const maxR = Math.max(...radii);
+  // At least 1 turn worth of length
+  const turnScore = Math.min(1, totalLen / (maxR * 2 * Math.PI * 0.8));
+  const raw = proximity*0.80 + turnScore*0.20;
+  const total = strictScore(raw);
+  return { total, breakdown:{'On-line':pct(proximity),'Turns':pct(turnScore)} };
 }
 
 // ---- Arrow ----
 function scoreArrow(pts) {
-  // Arrow is roughly symmetric horizontally, with a pointed right side
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'arrow', W, H, 0.35);
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
   let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
   pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
   const w=maxX-minX, h=maxY-minY;
-  const aspect = h>0 ? Math.min(w/h, 3)/3 : 0; // arrow should be wider than tall
+  const aspect = h>0 ? Math.min(w/h, 3)/3 : 0;
   const r = Math.max(w,h)/2;
   const cl = closureScore(pts, r);
-  const raw = aspect*0.40 + cl*0.35 + 0.25;
-  return { total: strictScore(raw), breakdown: {'Aspect': pct(aspect), 'Closure': pct(cl)} };
+  const raw = guideScore*0.60 + aspect*0.22 + cl*0.18;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(guideScore), 'Aspect': pct(aspect), 'Closure': pct(cl)} };
 }
 
 // ---- Cross ----
 function scoreCross(pts) {
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'cross', W, H, 0.33);
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
   let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
@@ -1635,94 +2022,123 @@ function scoreCross(pts) {
   const aspect = Math.min(w,h)/Math.max(w,h);
   const r = Math.max(w,h)/2;
   const cl = closureScore(pts, r);
-  // Symmetry: count pts in each quadrant
-  const q=[0,0,0,0];
-  pts.forEach(p=>{
-    const dx=p.x-cx, dy=p.y-cy;
-    if(dx>=0&&dy<0) q[0]++; else if(dx>=0&&dy>=0) q[1]++;
-    else if(dx<0&&dy>=0) q[2]++; else q[3]++;
-  });
-  const total_q=q.reduce((a,b)=>a+b,0);
-  const sym = total_q>0 ? 1 - q.map(v=>Math.abs(v/total_q-0.25)).reduce((a,b)=>a+b,0)*2 : 0;
-  const raw = aspect*0.30 + cl*0.30 + Math.max(0,sym)*0.40;
-  return { total: strictScore(raw), breakdown: {'Symmetry': pct(sym), 'Closure': pct(cl), 'Proportions': pct(aspect)} };
+  const raw = guideScore*0.60 + cl*0.22 + aspect*0.18;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(guideScore), 'Closure': pct(cl), 'Symmetry': pct(aspect)} };
 }
 
 // ---- Heart ----
 function scoreHeart(pts) {
+  const W = canvas.width, H = canvas.height;
+  // More forgiving tolerance (0.55 instead of 0.38) + use proximity scoring
+  const guideScore = scoreAgainstGuide(pts, 'heart', W, H, 0.55);
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
-  // Left-right symmetry check
   const leftPts = pts.filter(p=>p.x<cx);
   const rightPts = pts.filter(p=>p.x>=cx);
   const sym = Math.min(leftPts.length, rightPts.length) / Math.max(leftPts.length, rightPts.length+0.1);
   const r = Math.max(...pts.map(p=>Math.hypot(p.x-cx,p.y-cy)));
   const cl = closureScore(pts, r);
-  const raw = sym*0.45 + cl*0.35 + 0.20;
-  return { total: strictScore(raw), breakdown: {'Symmetry': pct(sym), 'Closure': pct(cl)} };
+  // More weight on accuracy, less on perfect symmetry/closure
+  const raw = guideScore*0.70 + sym*0.15 + cl*0.15;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(guideScore), 'Symmetry': pct(sym), 'Closure': pct(cl)} };
+}
+
+// ---- Gem ----
+function scoreGem(pts) {
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'gem', W, H, 0.40);
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const r = Math.max(...pts.map(p=>Math.hypot(p.x-cx,p.y-cy)));
+  const cl = closureScore(pts, r);
+  const raw = guideScore*0.75 + cl*0.25;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(guideScore), 'Closure': pct(cl)} };
 }
 
 // ---- Crescent ----
 function scoreCrescent(pts) {
-  // Mostly check that it looks like an arc (partial circle) with concavity
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'crescent', W, H, 0.40);
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
   const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
   const r = radii.reduce((a,b)=>a+b,0)/radii.length;
   const variance = radii.reduce((acc,ri)=>acc+(ri-r)**2,0)/radii.length;
-  const roundness = Math.max(0,1-(Math.sqrt(variance)/r)*1.5);
-  const cl = closureScore(pts, r);
-  const raw = roundness*0.55 + cl*0.45;
-  return { total: strictScore(raw), breakdown: {'Roundness': pct(roundness), 'Closure': pct(cl)} };
+  const roundness = Math.max(0,1-(Math.sqrt(variance)/r)*1.2);
+  const raw = guideScore*0.65 + roundness*0.35;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(guideScore), 'Roundness': pct(roundness)} };
 }
 
 // ---- Rectangle ----
 function scoreRectangle(pts) {
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'rectangle', W, H, 0.30);
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
   let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
   pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
   const w=maxX-minX, h=maxY-minY;
-  // Should be wider than tall (landscape)
   const aspect = h>0&&w>0 ? Math.min(w,h)/Math.max(w,h) : 0;
-  // Check points hug the edges via polygon scoring (4 sides)
   const size = Math.max(w,h)/2;
-  const scaleX = w/2, scaleY = h/2;
-  // Fit to actual rectangle (not square)
-  let totalDist = 0;
-  pts.forEach(p=>{
-    const dx=p.x-cx, dy=p.y-cy;
-    // Distance to rectangle edge
-    const edgeDist = Math.min(
-      Math.abs(Math.abs(dy)-scaleY),
-      Math.abs(Math.abs(dx)-scaleX)
-    );
-    totalDist += edgeDist;
-  });
-  const avgDist = totalDist/pts.length;
-  const shapeScore = Math.max(0, 1-(avgDist/Math.max(scaleX,scaleY))*2.5);
-  const r = size;
-  const cl = closureScore(pts, r);
-  const raw = shapeScore*0.55 + cl*0.25 + aspect*0.20;
-  return { total: strictScore(raw), breakdown: {'Accuracy': pct(shapeScore), 'Closure': pct(cl), 'Proportions': pct(1-aspect)} };
+  const cl = closureScore(pts, size);
+  const raw = guideScore*0.60 + cl*0.22 + aspect*0.18;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(guideScore), 'Closure': pct(cl), 'Proportions': pct(aspect)} };
 }
 
 // ---- Parallelogram ----
 function scoreParallelogram(pts) {
+  const W = canvas.width, H = canvas.height;
+  // Very forgiving proximity — if on the line → 85+
+  const proximity = scoreProximityOnly(pts, 'parallelogram', W, H, 0.60);
   const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
   const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
+  const r = radii.reduce((a,b)=>a+b,0)/radii.length;
+  const cl = closureScore(pts, r);
+  const raw = proximity*0.90 + cl*0.10;
+  const boosted = Math.min(1, raw * 1.18);
+  return { total: softScore(boosted), breakdown: {'On-line': pct(proximity), 'Closure': pct(cl)} };
+}
+
+// ---- Oval ----
+function scoreOval(pts) {
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'oval', W, H, 0.32);
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const radii = pts.map(p=>Math.hypot(p.x-cx,p.y-cy));
+  const r = radii.reduce((a,b)=>a+b,0)/radii.length;
+  const cl = closureScore(pts, r);
   let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
   pts.forEach(p=>{minX=Math.min(minX,p.x);maxX=Math.max(maxX,p.x);minY=Math.min(minY,p.y);maxY=Math.max(maxY,p.y);});
   const w=maxX-minX, h=maxY-minY;
-  // Should be wider than tall
-  const aspect = h>0 ? Math.min(w,h)/Math.max(w,h) : 0;
-  const r = Math.max(w,h)/2;
-  const cl = closureScore(pts, r);
-  const raw = (1-aspect)*0.30 + cl*0.45 + 0.25;
-  return { total: strictScore(raw), breakdown: {'Closure': pct(cl), 'Slant': pct(1-aspect)} };
+  // Oval should be wider than tall
+  const ovalShape = w>0&&h>0 ? Math.min(1, (w/h)*0.6) : 0;
+  const raw = guideScore*0.65 + cl*0.20 + ovalShape*0.15;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(guideScore), 'Closure': pct(cl), 'Shape': pct(ovalShape)} };
 }
 
-// ---- Helpers ----
+// ---- Trapezoid ----
+function scoreTrapezoid(pts) {
+  const W = canvas.width, H = canvas.height;
+  const guideScore = scoreAgainstGuide(pts, 'trapezoid', W, H, 0.33);
+  const cx = pts.reduce((s,p)=>s+p.x,0)/pts.length;
+  const cy = pts.reduce((s,p)=>s+p.y,0)/pts.length;
+  const r = Math.max(...pts.map(p=>Math.hypot(p.x-cx,p.y-cy)));
+  const cl = closureScore(pts, r);
+  const raw = guideScore*0.75 + cl*0.25;
+  return { total: strictScore(raw), breakdown: {'Accuracy': pct(guideScore), 'Closure': pct(cl)} };
+}
+
+// ---- Zigzag ----
+function scoreZigzag(pts) {
+  const W = canvas.width, H = canvas.height;
+  const proximity = scoreProximityOnly(pts, 'zigzag', W, H, 0.50);
+  const raw = proximity;
+  return { total: strictScore(raw), breakdown: {'On-line': pct(proximity)} };
+}
+
+
 function closureScore(pts, r) {
   const d=Math.hypot(pts[0].x-pts[pts.length-1].x,pts[0].y-pts[pts.length-1].y);
   return Math.max(0,1-(d/(r*1.5))*1.3);
@@ -1730,15 +2146,22 @@ function closureScore(pts, r) {
 function pct(v) { return Math.round(Math.max(0,Math.min(1,v))*100); }
 
 // HUMAN scoring curve: raw 0..1 → final 0..100
-// Feels fair: average attempt ~55-65%, good ~70-80%, great ~85-93%, near-perfect ~95+
+// Level multiplier makes higher levels harder to get high scores
 function strictScore(raw) {
-  // Piecewise curve: generous in mid-range, steep only at extremes
-  // raw=1.0 → 100, raw=0.85 → ~88, raw=0.70 → ~72, raw=0.55 → ~54, raw=0.40 → ~35, raw=0.20 → ~13
   const x = Math.max(0, Math.min(1, raw));
-  // Slight S-curve: softer than power 2.8, natural feel
-  const powered = Math.pow(x, 1.6);
-  // Boost the middle range a bit so "decent" attempts land around 55-70
-  const boosted = powered * 0.85 + x * 0.15;
+  // Level-aware harshness: higher level → steeper curve
+  const harshness = 1.4 + (currentLevel - 1) * 0.3; // 1.4 (L1) → 2.6 (L5)
+  const powered = Math.pow(x, harshness);
+  const boosted = powered * 0.82 + x * 0.18;
+  return Math.round(Math.min(100, Math.max(0, boosted * 100)));
+}
+
+// Softer scoring for hexagon — if you draw on the line you get rewarded
+function softScore(raw) {
+  const x = Math.max(0, Math.min(1, raw));
+  const harshness = 1.1; // always gentle regardless of level
+  const powered = Math.pow(x, harshness);
+  const boosted = powered * 0.75 + x * 0.25;
   return Math.round(Math.min(100, Math.max(0, boosted * 100)));
 }
 
@@ -1819,8 +2242,8 @@ function getGrade(score) {
   if (score >= 70) return { emoji: '🌟', text: 'Very Good!' };
   if (score >= 55) return { emoji: '👍', text: 'Not Bad!' };
   if (score >= 35) return { emoji: '😅', text: 'Keep Practicing' };
-  if (score >= 15) return { emoji: '😬', text: 'Train More!' };
-  return { emoji: '😂', text: 'What was that?!' };
+  if (score >= 15) return { emoji: '😬', text: 'Wrong Shape?' };
+  return { emoji: '😂', text: 'That\'s not the shape!' };
 }
 
 function showResult(result, isNewBest, shapePassed) {
